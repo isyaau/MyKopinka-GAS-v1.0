@@ -2079,6 +2079,18 @@
                             <div class="settings-card-sub">Atur plafon kredit seluruh anggota dan visibilitas informasi limit di panel anggota.</div>
                         </div>
                     </div>
+                    <div class="settings-row settings-switch-row">
+                        <div>
+                            <label>Fitur Limit Kredit</label>
+                            <small>Nonaktifkan untuk membebaskan anggota dari pengurangan limit &amp; blokir kredit toko. Nilai limit tetap tersimpan dan bisa diaktifkan kembali kapan saja.</small>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="sw-limit-aktif" onchange="labelLimitAktif()">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="lbl-limit-aktif" class="settings-state">Aktif</span>
+                    </div>
+                    <div id="limit-config-area">
                     <div class="settings-row">
                         <label>Limit Piutang Global (Rp)</label>
                         <input type="number" id="inp-limit-global" placeholder="Masukkan nominal limit...">
@@ -2094,6 +2106,7 @@
                             <span class="slider round"></span>
                         </label>
                         <span id="lbl-show-limit-member" class="settings-state">Aktif</span>
+                    </div>
                     </div>
                     <button class="btn-primary settings-save" onclick="simpanLimitGlobal()"><i
                             class="bi bi-check2-circle"></i> Simpan Perubahan</button>
@@ -4986,6 +4999,11 @@
             google.script.run.withSuccessHandler(function (val) {
                 hideLoading();
                 safeSetValue('inp-limit-global', val);
+                google.script.run.withSuccessHandler(function (aktif) {
+                    var swAktif = document.getElementById('sw-limit-aktif');
+                    if (swAktif) swAktif.checked = (aktif === true || aktif === 'true' || aktif === 1 || aktif === '1');
+                    labelLimitAktif();
+                }).getLimitKreditAktif();
                 google.script.run.withSuccessHandler(function (showVal) {
                     var show = (showVal === true || showVal === 'true' || showVal === 1 || showVal === '1');
                     var sw = document.getElementById('sw-show-limit-member');
@@ -4993,6 +5011,27 @@
                     labelShowLimitMember();
                 }).getShowLimitMember();
             }).getGlobalLimit();
+        }
+        function fmtLimitRp(v) {
+            var n = Number(v);
+            if (isNaN(n) || n < 0) return 'Tanpa Batas';
+            return 'Rp ' + n.toLocaleString('id-ID');
+        }
+        function labelLimitAktif() {
+            var sw = document.getElementById('sw-limit-aktif');
+            var lbl = document.getElementById('lbl-limit-aktif');
+            if (!sw || !lbl) return;
+            lbl.textContent = sw.checked ? 'Aktif' : 'Nonaktif';
+            lbl.classList.toggle('off', !sw.checked);
+            applyLimitFeatureState();
+        }
+        function applyLimitFeatureState() {
+            var sw = document.getElementById('sw-limit-aktif');
+            var area = document.getElementById('limit-config-area');
+            if (!sw || !area) return;
+            var on = sw.checked;
+            area.style.opacity = on ? '1' : '0.45';
+            area.style.pointerEvents = on ? 'auto' : 'none';
         }
         function labelShowLimitMember() {
             var sw = document.getElementById('sw-show-limit-member');
@@ -5014,19 +5053,26 @@
             if (!val || val < 0) return Swal.fire('Peringatan', 'Masukkan nominal limit yang valid!', 'warning');
             var sw = document.getElementById('sw-show-limit-member');
             var showLimit = (sw && sw.checked) ? true : false;
+            var swAktif = document.getElementById('sw-limit-aktif');
+            var aktif = (swAktif && swAktif.checked) ? true : false;
             showLoading("Menyimpan...");
-            google.script.run.withSuccessHandler(function (res) {
-                if (res.status === 'sukses') {
-                    google.script.run.withSuccessHandler(function (res2) {
+            google.script.run.withSuccessHandler(function (resAktif) {
+                google.script.run.withSuccessHandler(function (res) {
+                    if (res.status === 'sukses') {
+                        google.script.run.withSuccessHandler(function (res2) {
+                            hideLoading();
+                            var msgs = [];
+                            if (resAktif && resAktif.msg) msgs.push(resAktif.msg);
+                            msgs.push(res.msg);
+                            if (res2 && res2.msg) msgs.push(res2.msg);
+                            Swal.fire(res2 && res2.status === 'sukses' ? 'Berhasil' : 'Gagal', msgs.join(' '), res2 && res2.status === 'sukses' ? 'success' : 'error');
+                        }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveShowLimitMember(showLimit);
+                    } else {
                         hideLoading();
-                        if (res2.status === 'sukses') Swal.fire('Berhasil', res.msg + ' ' + res2.msg, 'success');
-                        else Swal.fire('Gagal', res2.msg, 'error');
-                    }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveShowLimitMember(showLimit);
-                } else {
-                    hideLoading();
-                    Swal.fire('Gagal', res.msg, 'error');
-                }
-            }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveGlobalLimit(val);
+                        Swal.fire('Gagal', res.msg, 'error');
+                    }
+                }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveGlobalLimit(val);
+            }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).saveLimitKreditAktif(aktif);
         }
 
         // ==========================================
@@ -5446,7 +5492,7 @@
                 if (piutangChecked) {
                     inlineNom = document.getElementById('nominal-redeem-piutang') ? document.getElementById('nominal-redeem-piutang').value.trim() : '';
                     finalNom = Number(inlineNom) || 0;
-                    if (finalNom > v.sisaLimit) {
+                    if (Number(v.sisaLimit) >= 0 && finalNom > Number(v.sisaLimit)) {
                         return Swal.fire('Limit Melampaui', 'Nominal piutang (Rp ' + finalNom.toLocaleString('id-ID') + ') melebihi sisa limit anggota (Rp ' + v.sisaLimit.toLocaleString('id-ID') + ')', 'error');
                     }
                 }
@@ -5540,11 +5586,11 @@
                         '</div>' +
                         '<div style="display:flex; justify-content:space-between; background:#f0fdf4; padding:10px; border-radius:10px;">' +
                         '<span style="font-size:10px; font-weight:bold; color:#15803d;">LIMIT EFEKTIF</span>' +
-                        '<span style="font-size:13px; font-weight:800; color:#15803d;">Rp ' + limitGlobalCard.toLocaleString('id-ID') + '</span>' +
+                        '<span style="font-size:13px; font-weight:800; color:#15803d;">' + fmtLimitRp(limitGlobalCard) + '</span>' +
                         '</div>' +
                         '<div style="margin-top:5px; background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); padding:15px; border-radius:12px; color:#fff; text-align:center; box-shadow:0 4px 12px rgba(39,174,96,0.2);">' +
                         '<div style="font-size:9px; font-weight:700; text-transform:uppercase; opacity:0.9; margin-bottom:4px;">Sisa Saldo Tersedia</div>' +
-                        '<div style="font-size:20px; font-weight:900;">Rp ' + sisaCard.toLocaleString('id-ID') + '</div>' +
+                        '<div style="font-size:20px; font-weight:900;">' + fmtLimitRp(sisaCard) + '</div>' +
                         '</div>' +
                         '</div>' +
                         '</div>' +
@@ -5668,15 +5714,15 @@
                             '<div style="display:flex; flex-direction:column; gap:12px;">' +
                             '<div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:10px;">' +
                             '<span style="font-size:10px; font-weight:bold; color:#718096;">LIMIT PLAFON</span>' +
-                            '<span style="font-size:13px; font-weight:800; color:#2d3748;">Rp ' + limit.toLocaleString('id-ID') + '</span>' +
+                            '<span style="font-size:13px; font-weight:800; color:#2d3748;">' + fmtLimitRp(limit) + '</span>' +
                             '</div>' +
                             '<div style="display:flex; justify-content:space-between; background:#fff5f5; padding:10px; border-radius:10px;">' +
                             '<span style="font-size:10px; font-weight:bold; color:#e53e3e;">PEMAKAIAN</span>' +
-                            '<span style="font-size:13px; font-weight:800; color:#c53030;">Rp ' + terpakai.toLocaleString('id-ID') + '</span>' +
+                            '<span style="font-size:13px; font-weight:800; color:#c53030;">' + fmtLimitRp(terpakai) + '</span>' +
                             '</div>' +
                             '<div style="margin-top:5px; background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); padding:15px; border-radius:12px; color:#fff; text-align:center; box-shadow:0 4px 12px rgba(39,174,96,0.2);">' +
                             '<div style="font-size:9px; font-weight:700; text-transform:uppercase; opacity:0.9; margin-bottom:4px;">Sisa Saldo Tersedia</div>' +
-                            '<div style="font-size:20px; font-weight:900;">Rp ' + sisa.toLocaleString('id-ID') + '</div>' +
+                            '<div style="font-size:20px; font-weight:900;">' + fmtLimitRp(sisa) + '</div>' +
                             '</div>' +
                             '</div>' +
                             '</div>' +
@@ -5730,7 +5776,7 @@
             }
 
             // Validasi Sisa Limit untuk Multi-Redeem
-            if (massNomVal > currentMultiMember.sisaLimit) {
+            if (Number(currentMultiMember.sisaLimit) >= 0 && massNomVal > Number(currentMultiMember.sisaLimit)) {
                 return Swal.fire('Limit Melampaui', 'Total nominal piutang (Rp ' + massNomVal.toLocaleString('id-ID') + ') melebihi sisa limit anggota (Rp ' + currentMultiMember.sisaLimit.toLocaleString('id-ID') + ')', 'error');
             }
 
@@ -5828,12 +5874,12 @@
                             '            </div>',
                             '            <div style="display:flex; justify-content:space-between; background:#f0fdf4; padding:10px; border-radius:10px;">',
                             '                <span style="font-size:10px; font-weight:bold; color:#15803d;">LIMIT EFEKTIF</span>',
-                            '                <span style="font-size:13px; font-weight:800; color:#15803d;">Rp ' + limitCard.toLocaleString('id-ID') + '</span>',
+                            '                <span style="font-size:13px; font-weight:800; color:#15803d;">' + fmtLimitRp(limitCard) + '</span>',
                             '            </div>',
                             '        </div>',
                             '        <div style="margin-top:5px; background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); padding:15px; border-radius:12px; color:#fff; text-align:center; box-shadow:0 4px 12px rgba(39,174,96,0.2);">',
                             '            <div style="font-size:9px; font-weight:700; text-transform:uppercase; opacity:0.9; margin-bottom:4px;">Sisa Saldo Tersedia</div>',
-                            '            <div style="font-size:20px; font-weight:900;">Rp ' + sisaCard.toLocaleString('id-ID') + '</div>',
+                            '            <div style="font-size:20px; font-weight:900;">' + fmtLimitRp(sisaCard) + '</div>',
                             '        </div>',
                             '    </div>',
                             '</div>'
@@ -6122,7 +6168,7 @@
 
             // Validasi Sisa Limit Modal Piutang
             if (pendingPiutangMode === 'redeem' || pendingPiutangMode === 'piutang_only') {
-                if (valNom > pendingPiutangRedeemData.voucher.sisaLimit) {
+                if (Number(pendingPiutangRedeemData.voucher.sisaLimit) >= 0 && valNom > Number(pendingPiutangRedeemData.voucher.sisaLimit)) {
                     return Swal.fire('Limit Melampaui', 'Nominal piutang melebihi sisa limit anggota!', 'error');
                 }
             }
@@ -6301,19 +6347,22 @@
 
         function renderKreditTokoSummary() {
             var s = myKreditTokoSummary || { global: 0, outstanding: 0, effective: 0, terpakai: 0, biayaJasa: 0 };
-            safeSetText('kt-global', 'Rp ' + (Number(s.global) || 0).toLocaleString('id-ID'));
+            safeSetText('kt-global', fmtLimitRp(s.global));
             safeSetText('kt-outstanding', 'Rp ' + (Number(s.outstanding) || 0).toLocaleString('id-ID'));
-            safeSetText('kt-effective', 'Rp ' + (Number(s.effective) || 0).toLocaleString('id-ID'));
+            safeSetText('kt-effective', fmtLimitRp(s.effective));
             safeSetText('kt-total', 'Rp ' + (Number(s.terpakai) || 0).toLocaleString('id-ID'));
             safeSetText('kt-biaya-jasa', 'Rp ' + (Number(s.biayaJasa) || 0).toLocaleString('id-ID'));
             var chip = document.getElementById('kt-status-chip');
             if (chip) {
-                if ((Number(s.effective) || 0) <= 0) chip.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.6); padding:3px 11px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-x-circle-fill"></i> DIBLOKIR</span>';
+                var eff = Number(s.effective);
+                if (eff < 0) chip.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.6); padding:3px 11px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-check-circle-fill"></i> TANPA BATAS</span>';
+                else if (eff <= 0) chip.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.6); padding:3px 11px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-x-circle-fill"></i> DIBLOKIR</span>';
                 else chip.innerHTML = '<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.6); padding:3px 11px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-check-circle-fill"></i> AKTIF</span>';
             }
             var noticeEl = document.getElementById('kt-notice');
             if (noticeEl) {
-                if ((Number(s.effective) || 0) <= 0) noticeEl.classList.remove('hidden');
+                var effN = Number(s.effective);
+                if (effN >= 0 && effN <= 0) noticeEl.classList.remove('hidden');
                 else noticeEl.classList.add('hidden');
             }
         }
@@ -7029,11 +7078,12 @@
                     if (!el) return;
                     if (res.status === 'sukses') {
                         var limit = Number(res.limitBulanIni) || 0;
-                        var blocked = limit <= 0;
-                        var stK = blocked ? chip('<i class="bi bi-x-circle-fill"></i> DIBLOKIR', '#e74c3c', '#fff') : chip('<i class="bi bi-check-circle-fill"></i> AKTIF', '#27ae60', '#fff');
+                        var unlimited = limit < 0;
+                        var blocked = !unlimited && limit <= 0;
+                        var stK = unlimited ? chip('<i class="bi bi-check-circle-fill"></i> TANPA BATAS', '#27ae60', '#fff') : (blocked ? chip('<i class="bi bi-x-circle-fill"></i> DIBLOKIR', '#e74c3c', '#fff') : chip('<i class="bi bi-check-circle-fill"></i> AKTIF', '#27ae60', '#fff'));
                         el.innerHTML = '<div style="margin-top:14px;"><div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#c0392b; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><i class="bi bi-book-fill"></i> Status Kredit Toko</div>' +
                             '<div style="background:#fcf3f3; border:1px solid #f5d4d4; border-radius:10px; padding:10px 14px; display:flex; flex-wrap:wrap; gap:10px;">' +
-                            '<div style="flex:1 1 45%; min-width:160px;"><div style="font-size:11px; color:#a67878;">Limit Bulan Ini (efektif)</div><div style="font-size:13px; font-weight:700; color:#c0392b;">Rp ' + limit.toLocaleString('id-ID') + '</div></div>' +
+                            '<div style="flex:1 1 45%; min-width:160px;"><div style="font-size:11px; color:#a67878;">Limit Bulan Ini (efektif)</div><div style="font-size:13px; font-weight:700; color:#c0392b;">' + fmtLimitRp(limit) + '</div></div>' +
                             '<div style="flex:1 1 45%; min-width:160px;"><div style="font-size:11px; color:#a67878;">Sisa Tagihan Periode Lalu</div><div style="font-size:13px; font-weight:700; color:#c0392b;">Rp ' + (Number(res.outstanding) || 0).toLocaleString('id-ID') + '</div></div>' +
                             '<div style="flex:1 1 45%; min-width:160px;"><div style="font-size:11px; color:#a67878;">Total Piutang Belum Lunas</div><div style="font-size:13px; font-weight:700; color:#c0392b;">Rp ' + (Number(res.totalOutstanding) || 0).toLocaleString('id-ID') + '</div></div>' +
                             '<div style="flex:1 1 45%; min-width:160px;"><div style="font-size:11px; color:#a67878;">Status Kredit</div><div style="margin-top:3px;">' + stK + '</div></div>' +
@@ -7245,10 +7295,10 @@
 
             // --- Updated logic for Piutang Limit (4-field ringkasan) ---
             const memberLimitGlobal = Number(userToko.limitPiutang) || 0;
-            safeSetText('profil-limit-global', 'Rp ' + memberLimitGlobal.toLocaleString('id-ID'));
+            safeSetText('profil-limit-global', fmtLimitRp(memberLimitGlobal));
             safeSetText('profil-limit-outstanding', 'Rp 0');
-            safeSetText('profil-limit-pakai', 'Rp 0');
-            safeSetText('profil-limit-sisa', 'Rp ' + memberLimitGlobal.toLocaleString('id-ID'));
+            safeSetText('profil-limit-pakai', fmtLimitRp(0));
+            safeSetText('profil-limit-sisa', fmtLimitRp(memberLimitGlobal));
 
             try {
                 const resHutang = await new Promise((resolve, reject) => {
@@ -7262,10 +7312,10 @@
                     const myHutangItems = resHutang.items || [];
                     const totalPiutangGlobal = myHutangItems.reduce((sum, h) => sum + (Number(h.sisa) || 0), 0);
                     const remainingLimit = memberLimitGlobal - totalPiutangGlobal;
-                    safeSetText('profil-limit-global', 'Rp ' + (Number(resHutang.limitGlobal) || 0).toLocaleString('id-ID'));
+                    safeSetText('profil-limit-global', fmtLimitRp(resHutang.limitGlobal));
                     safeSetText('profil-limit-outstanding', 'Rp ' + (Number(resHutang.outstanding) || 0).toLocaleString('id-ID'));
-                    safeSetText('profil-limit-pakai', 'Rp ' + (Number(resHutang.limitBulanIni) || 0).toLocaleString('id-ID'));
-                    safeSetText('profil-limit-sisa', 'Rp ' + Math.max(0, remainingLimit).toLocaleString('id-ID'));
+                    safeSetText('profil-limit-pakai', fmtLimitRp(resHutang.limitBulanIni));
+                    safeSetText('profil-limit-sisa', fmtLimitRp(remainingLimit));
                 }
             } catch (err) {
                 console.error("Error fetching piutang for member card:", err);
@@ -8432,8 +8482,8 @@
                         '<td style="color:#e74c3c; font-weight:700;">Rp ' + Number(h.nilai).toLocaleString('id-ID') + '</td>' +
                         '<td style="color:#27ae60;">Rp ' + (Number(h.dibayar) || 0).toLocaleString('id-ID') + '</td>' +
                         '<td style="color:#e74c3c; font-weight:700;">Rp ' + (Number(h.sisa) || 0).toLocaleString('id-ID') + '</td>' +
-                        '<td>Rp ' + (Number(h.memberLimit) || 0).toLocaleString('id-ID') + '</td>' +
-                        '<td>' + (h.remainingLimit !== undefined ? 'Rp ' + Number(h.remainingLimit).toLocaleString('id-ID') : '-') + '</td>' +
+                        '<td>' + (Number(h.memberLimit) < 0 ? 'Tanpa Batas' : 'Rp ' + (Number(h.memberLimit) || 0).toLocaleString('id-ID')) + '</td>' +
+                        '<td>' + (h.remainingLimit !== undefined ? (Number(h.remainingLimit) < 0 ? 'Tanpa Batas' : 'Rp ' + Number(h.remainingLimit).toLocaleString('id-ID')) : '-') + '</td>' +
                         '<td style="text-align:center;">' + notifBadge + '</td>' +
                         '<td style="white-space:nowrap;">' + pesanBtn + ' ' + detailBtn + ' ' + notifTgl + '</td>' +
                         '</tr>';

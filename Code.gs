@@ -195,7 +195,16 @@ function _getSettingCached(key, ttl) {
   return v;
 }
 
+// Fitur limit kredit aktif/nonaktif. Default aktif agar perilaku lama tetap berjalan.
+function _isLimitKreditAktif() {
+  var v = _getSettingCached('limit_kredit_aktif');
+  if (v === null || v === undefined || v === '') return true;
+  var s = String(v).toLowerCase();
+  return s === 'true' || s === '1' || s === 'aktif' || s === 'yes' || s === 'y';
+}
+
 function _getGlobalLimitCached() {
+  if (!_isLimitKreditAktif()) return -1;
   return Number(_getSettingCached('limit_piutang')) || 0;
 }
 
@@ -295,6 +304,9 @@ function _getBatasKreditAnggota(noAnggota) {
     outstanding = totalPiutang - totalDibayar;
     if (outstanding < 0) outstanding = 0;
   } catch (e) {}
+  if (!_isLimitKreditAktif()) {
+    return { global: -1, outstanding: outstanding, effective: -1 };
+  }
   var effective = global - outstanding;
   if (effective < 0) effective = 0;
   return { global: global, outstanding: outstanding, effective: effective };
@@ -322,6 +334,16 @@ function _getBatasKreditAllMembers(dataPiutangOpt) {
   } catch (e) {}
 
   var memberBayar = _getCachedMemberPaymentMap();
+  if (!_isLimitKreditAktif()) {
+    var outLimits = {};
+    for (var kk in piutangLalu) {
+      var totPay = memberBayar[kk] || 0;
+      var out = piutangLalu[kk] - totPay;
+      if (out < 0) out = 0;
+      outLimits[kk] = { global: -1, outstanding: out, effective: -1 };
+    }
+    return outLimits;
+  }
   var limits = {};
   for (var k in piutangLalu) {
     var totalDibayar = memberBayar[k] || 0;
@@ -1550,14 +1572,16 @@ function redeemMassalPiutang(arrKode, userToko, notaToko, base64Photo, fileName,
             
             if (st === 'active' && !isExp && !isEarly) {
               var valNum = (massNominal !== undefined && massNominal !== null && String(massNominal).toString().trim() !== "") ? Number(massNominal) || 0 : Number(dVoucher[i][5]) || 0;
-              var batasM = _getBatasKreditAnggota(dVoucher[i][1]);
-              var currentMemberDebt = _getKreditTokoBulanIni(dVoucher[i][1]);
-              if (batasM.effective <= 0) {
-                continue; // Sisa tagihan sudah membebani limit, kredit diblokir
-              }
-              if (currentMemberDebt + valNum > batasM.effective) {
-                // Jika salah satu voucher menyebabkan overload, skip atau hentikan? Biasanya skip atau tolak semua.
-                continue; 
+              if (_isLimitKreditAktif()) {
+                var batasM = _getBatasKreditAnggota(dVoucher[i][1]);
+                var currentMemberDebt = _getKreditTokoBulanIni(dVoucher[i][1]);
+                if (batasM.effective <= 0) {
+                  continue; // Sisa tagihan sudah membebani limit, kredit diblokir
+                }
+                if (currentMemberDebt + valNum > batasM.effective) {
+                  // Jika salah satu voucher menyebabkan overload, skip atau hentikan? Biasanya skip atau tolak semua.
+                  continue; 
+                }
               }
 
               // Tandai voucher sebagai Used
@@ -1655,7 +1679,7 @@ function catatPiutangMassal(arrKode, userToko, notaToko, base64Photo, fileName, 
         }
     }
     
-    if (vAngg) {
+    if (vAngg && _isLimitKreditAktif()) {
         var batasM = _getBatasKreditAnggota(vAngg);
         if (batasM.effective <= 0) {
           return { status: 'error', msg: '❌ Kredit Toko diblokir: sisa tagihan bulan lalu (Rp ' + _formatRp(batasM.outstanding) + ') sudah mencapai limit. Segera bayar tagihan agar dapat kredit baru.' };
@@ -2067,13 +2091,15 @@ function addPiutangManual(noAnggota, notaToko, nilai, userToko, base64Photo, fil
     var idSys = 'PIU-' + new Date().getTime().toString().slice(-8);
     var valNum = Number(String(nilai).replace(/[^0-9\-\\.]/g,'')) || 0;
 
-    var batas = _getBatasKreditAnggota(noAnggota);
-    var hutangBulanIni = _getKreditTokoBulanIni(noAnggota);
-    if (batas.effective <= 0) {
-      return { status: 'error', msg: '❌ Kredit Toko diblokir: sisa tagihan bulan lalu (Rp ' + _formatRp(batas.outstanding) + ') sudah mencapai limit. Segera bayar tagihan agar dapat kredit baru.' };
-    }
-    if (hutangBulanIni + valNum > batas.effective) {
-      return { status: 'error', msg: 'Limit piutang bulan ini tidak mencukupi! Batas (limit global ' + _formatRp(batas.global) + ' - sisa tagihan ' + _formatRp(batas.outstanding) + '): Rp ' + _formatRp(batas.effective) + '. Sisa: Rp ' + _formatRp(batas.effective - hutangBulanIni) };
+    if (_isLimitKreditAktif()) {
+      var batas = _getBatasKreditAnggota(noAnggota);
+      var hutangBulanIni = _getKreditTokoBulanIni(noAnggota);
+      if (batas.effective <= 0) {
+        return { status: 'error', msg: '❌ Kredit Toko diblokir: sisa tagihan bulan lalu (Rp ' + _formatRp(batas.outstanding) + ') sudah mencapai limit. Segera bayar tagihan agar dapat kredit baru.' };
+      }
+      if (hutangBulanIni + valNum > batas.effective) {
+        return { status: 'error', msg: 'Limit piutang bulan ini tidak mencukupi! Batas (limit global ' + _formatRp(batas.global) + ' - sisa tagihan ' + _formatRp(batas.outstanding) + '): Rp ' + _formatRp(batas.effective) + '. Sisa: Rp ' + _formatRp(batas.effective - hutangBulanIni) };
+      }
     }
 
     var fileId = '';
@@ -2191,10 +2217,12 @@ function prosesVoucherPiutang(kode, userToko, notaToko, base64Photo, fileName, n
       return { status: 'error', msg: '❌ Anggota ' + noAnggota + ' (' + vData[2] + ') sedang diblokir untuk transaksi piutang.' };
     }
     var valNum = Number(nominalOverride !== undefined && nominalOverride !== null ? nominalOverride : vData[5]) || 0;
-    var batas = _getBatasKreditAnggota(noAnggota);
-    var hutangBulanIni = _getKreditTokoBulanIni(noAnggota);
-    if (batas.effective <= 0) return { status: 'error', msg: '❌ Kredit Toko diblokir: sisa tagihan bulan lalu (Rp ' + _formatRp(batas.outstanding) + ') sudah mencapai limit. Segera bayar tagihan agar dapat kredit baru.' };
-    if (hutangBulanIni + valNum > batas.effective) return { status: 'error', msg: 'Limit piutang bulan ini tidak mencukupi! Batas (limit global ' + _formatRp(batas.global) + ' - sisa tagihan ' + _formatRp(batas.outstanding) + '): Rp ' + _formatRp(batas.effective) + '. Sisa: Rp ' + _formatRp(batas.effective - hutangBulanIni) };
+    if (_isLimitKreditAktif()) {
+      var batas = _getBatasKreditAnggota(noAnggota);
+      var hutangBulanIni = _getKreditTokoBulanIni(noAnggota);
+      if (batas.effective <= 0) return { status: 'error', msg: '❌ Kredit Toko diblokir: sisa tagihan bulan lalu (Rp ' + _formatRp(batas.outstanding) + ') sudah mencapai limit. Segera bayar tagihan agar dapat kredit baru.' };
+      if (hutangBulanIni + valNum > batas.effective) return { status: 'error', msg: 'Limit piutang bulan ini tidak mencukupi! Batas (limit global ' + _formatRp(batas.global) + ' - sisa tagihan ' + _formatRp(batas.outstanding) + '): Rp ' + _formatRp(batas.effective) + '. Sisa: Rp ' + _formatRp(batas.effective - hutangBulanIni) };
+    }
 
     var tz = Session.getScriptTimeZone();
     var st = String(vData[6]).trim();
@@ -2949,6 +2977,23 @@ function saveShowLimitMember(value) {
     }
     _clearSettingCache('show_limit_member');
     return { status: 'sukses', msg: 'Setelan tampilan limit anggota disimpan.' };
+  } catch (e) {
+    return { status: 'error', msg: e.toString() };
+  }
+}
+
+// Controller fitur limit kredit (aktif/nonaktif)
+function getLimitKreditAktif() {
+  return _isLimitKreditAktif();
+}
+
+function saveLimitKreditAktif(value) {
+  try {
+    var val = (value === true || value === 'true' || value === 1 || value === '1') ? 'true' : 'false';
+    _setSetting('limit_kredit_aktif', val);
+    _clearSettingCache('limit_kredit_aktif');
+    _invalidateKreditCaches();
+    return { status: 'sukses', msg: val === 'true' ? 'Fitur limit kredit diaktifkan.' : 'Fitur limit kredit dinonaktifkan.' };
   } catch (e) {
     return { status: 'error', msg: e.toString() };
   }
