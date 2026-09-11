@@ -2870,8 +2870,8 @@
                         </select>
                     </div>
                     <div style="flex:1; min-width:150px;" id="filter-kredit-toko-search-wrap">
-                        <label>Cari Nama/No/Nota:</label>
-                        <input type="text" id="search-kredit-toko-admin" placeholder="🔍 Cari..."
+                        <label>Cari Nama/No Anggota:</label>
+                        <input type="text" id="search-kredit-toko-admin" placeholder="🔍 Cari Nama / No Anggota..."
                             oninput="applyFilterKreditTokoAdmin()">
                     </div>
                     <div style="flex:1; min-width:150px;" id="filter-kredit-toko-search-anggota-wrap" class="hidden">
@@ -8387,7 +8387,7 @@
                 var notifFilter = document.getElementById('filter-kredit-toko-notif').value;
 
                 filteredHutangAdmin = rawDataHutangAdmin.filter(function (h) {
-                    var matchText = (h.nama + " " + h.noAnggota + " " + (h.nota || "") + " " + (h.id || "")).toLowerCase().indexOf(q) !== -1;
+                    var matchText = (h.nama + " " + h.noAnggota).toLowerCase().indexOf(q) !== -1;
                     if (!matchText) return false;
                     var wp = (h.waktu || '').split(' ')[0].split('/');
                     if (wp.length === 3) {
