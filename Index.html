@@ -9464,6 +9464,15 @@ var skel = '';
                 if (thnEl) thnEl.value = thnDef;
                 kasirRekapFilterDefaulted = true;
             }
+            fetchKasirRekapServer();
+        }
+
+        var _kasirRekapTimer = null;
+
+        function fetchKasirRekapServer() {
+            var bln = document.getElementById('filter-kasir-rekap-bulan') ? document.getElementById('filter-kasir-rekap-bulan').value : 'ALL';
+            var thn = document.getElementById('filter-kasir-rekap-tahun') ? document.getElementById('filter-kasir-rekap-tahun').value : '';
+            var q = (document.getElementById('search-kasir-rekap') ? document.getElementById('search-kasir-rekap').value : '').toString().toLowerCase().trim();
             showLoading("Memuat rekap kredit...");
             google.script.run.withSuccessHandler(function (res) {
                 hideLoading();
@@ -9472,36 +9481,20 @@ var skel = '';
                 }
                 kasirRekapData = res.data;
                 kasirRekapJasa = Number(res.totalBiayaJasa) || 0;
+                kasirRekapFiltered = kasirRekapData;
                 kasirRekapPage = 1;
-                applyFilterKasirRekap();
+                renderKasirRekapStats();
+                renderKasirRekapTable();
             }).withFailureHandler(function (err) {
                 hideLoading();
                 console.error(err);
                 Swal.fire('Error', 'Gagal memuat rekap kredit: ' + err.message, 'error');
-            }).getSemuaPiutangAdmin();
+            }).getSemuaPiutangAdmin(bln, thn, '', '', q);
         }
 
         function applyFilterKasirRekap() {
-            var q = (document.getElementById('search-kasir-rekap') ? document.getElementById('search-kasir-rekap').value : '').toString().toLowerCase().trim();
-            var bln = document.getElementById('filter-kasir-rekap-bulan') ? document.getElementById('filter-kasir-rekap-bulan').value : 'ALL';
-            var thn = document.getElementById('filter-kasir-rekap-tahun') ? document.getElementById('filter-kasir-rekap-tahun').value : '';
-
-            kasirRekapFiltered = kasirRekapData.filter(function (h) {
-                if (q !== '') {
-                    var hay = ((h.noAnggota || '') + ' ' + (h.nama || '')).toLowerCase();
-                    if (hay.indexOf(q) === -1) return false;
-                }
-                if (bln !== 'ALL' || thn !== '') {
-                    var m = (h.waktu || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                    if (m) {
-                        if (bln !== 'ALL' && m[2] !== bln) return false;
-                        if (thn !== '' && m[3] !== thn) return false;
-                    }
-                }
-                return true;
-            });
-            renderKasirRekapStats();
-            renderKasirRekapTable();
+            clearTimeout(_kasirRekapTimer);
+            _kasirRekapTimer = setTimeout(fetchKasirRekapServer, 250);
         }
 
         function renderKasirRekapStats() {
