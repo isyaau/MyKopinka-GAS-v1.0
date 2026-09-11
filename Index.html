@@ -5680,9 +5680,7 @@
                         var mInfo = document.getElementById('multi-member-info');
                         mInfo.style.display = 'block';
                         var avatar = getAvatarUrl(res.info.foto, res.info.nama);
-                        var limit = Number(res.info.limit) || 0;
-                        var sisa = Number(res.info.sisaLimit) || 0;
-                        var terpakai = limit - sisa;
+                        var terpakai = Number(res.info.outstanding) || 0;
 
                         var isBlokir = res.info.blokirPiutang === 'blokir' || res.info.blokirPiutang === 'y' || res.info.blokirPiutang === 'yes' || res.info.blokirPiutang === '1';
                         var cardHtml = '<div style="display:flex; flex-direction:column; align-items:center; gap:20px; margin-bottom:30px;">' +
