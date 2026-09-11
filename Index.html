@@ -2997,21 +2997,25 @@
                     <h4>Jumlah Anggota</h4>
                     <div class="angka" id="stat-rekap-anggota-jml">0</div>
                 </div>
-                <div class="admin-card ac-red">
-                    <h4>Total Kredit</h4>
-                    <div class="angka" id="stat-rekap-anggota-total">Rp 0</div>
+                <div class="admin-card ac-green">
+                    <h4>Transaksi Toko Sutomo</h4>
+                    <div class="angka" id="stat-rekap-anggota-trans-sutomo">Rp 0</div>
+                </div>
+                <div class="admin-card ac-blue">
+                    <h4>Jasa Toko Sutomo (1,5%)</h4>
+                    <div class="angka" id="stat-rekap-anggota-jasa-sutomo">Rp 0</div>
                 </div>
                 <div class="admin-card ac-green">
-                    <h4>Total Dibayar</h4>
-                    <div class="angka" id="stat-rekap-anggota-dibayar">Rp 0</div>
+                    <h4>Transaksi Toko INKA</h4>
+                    <div class="angka" id="stat-rekap-anggota-trans-inka">Rp 0</div>
+                </div>
+                <div class="admin-card ac-blue">
+                    <h4>Jasa Toko INKA (1,5%)</h4>
+                    <div class="angka" id="stat-rekap-anggota-jasa-inka">Rp 0</div>
                 </div>
                 <div class="admin-card ac-red">
-                    <h4>Total Sisa</h4>
-                    <div class="angka" id="stat-rekap-anggota-sisa">Rp 0</div>
-                </div>
-                <div class="admin-card">
-                    <h4>Total Biaya Jasa (1,5%/bln)</h4>
-                    <div class="angka" id="stat-rekap-anggota-jasa">Rp 0</div>
+                    <h4>Total</h4>
+                    <div class="angka" id="stat-rekap-anggota-total">Rp 0</div>
                 </div>
             </div>
 
@@ -8728,10 +8732,11 @@
             }
 
             safeSetText('stat-rekap-anggota-jml', '...');
-            safeSetText('stat-rekap-anggota-total', 'Memproses...');
-            safeSetText('stat-rekap-anggota-dibayar', '...');
-            safeSetText('stat-rekap-anggota-sisa', '...');
-            safeSetText('stat-rekap-anggota-jasa', '...');
+            safeSetText('stat-rekap-anggota-trans-sutomo', '...');
+            safeSetText('stat-rekap-anggota-jasa-sutomo', '...');
+            safeSetText('stat-rekap-anggota-trans-inka', '...');
+            safeSetText('stat-rekap-anggota-jasa-inka', '...');
+            safeSetText('stat-rekap-anggota-total', '...');
 
             google.script.run.withSuccessHandler(function (res) {
                 if (res.status === 'sukses') {
@@ -8762,18 +8767,20 @@
             });
 
             // Update stats
-            var totalNilai = 0, totalDibayar = 0, totalSisa = 0, totalJasa = 0;
+            var totTransSutomo = 0, totJasaSutomo = 0, totTransInka = 0, totJasaInka = 0, totTotal = 0;
             filteredRekapAnggota.forEach(function (a) {
-                totalNilai += Number(a.totalNilai) || 0;
-                totalDibayar += Number(a.totalDibayar) || 0;
-                totalSisa += Number(a.sisa) || 0;
-                totalJasa += Number(a.biayaJasa) || 0;
+                totTransSutomo += Number(a.transSutomo) || 0;
+                totJasaSutomo += Number(a.jasaSutomo) || 0;
+                totTransInka += Number(a.transInka) || 0;
+                totJasaInka += Number(a.jasaInka) || 0;
+                totTotal += Number(a.total) || 0;
             });
             safeSetText('stat-rekap-anggota-jml', filteredRekapAnggota.length);
-            safeSetText('stat-rekap-anggota-total', 'Rp ' + totalNilai.toLocaleString('id-ID'));
-            safeSetText('stat-rekap-anggota-dibayar', 'Rp ' + totalDibayar.toLocaleString('id-ID'));
-            safeSetText('stat-rekap-anggota-sisa', 'Rp ' + totalSisa.toLocaleString('id-ID'));
-            safeSetText('stat-rekap-anggota-jasa', 'Rp ' + totalJasa.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-jasa-sutomo', 'Rp ' + totJasaSutomo.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-jasa-inka', 'Rp ' + totJasaInka.toLocaleString('id-ID'));
+            safeSetText('stat-rekap-anggota-total', 'Rp ' + totTotal.toLocaleString('id-ID'));
 
             rekapAnggotaPage = 1;
             renderRekapAnggotaTable();
