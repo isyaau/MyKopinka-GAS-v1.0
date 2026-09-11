@@ -9450,9 +9450,20 @@ var skel = '';
         var kasirRekapFiltered = [];
         var kasirRekapJasa = 0;
         var kasirRekapPage = 1;
+        var kasirRekapFilterDefaulted = false;
         var KASIR_REKAP_PER_HAL = 10;
 
         function loadKasirRekap() {
+            if (!kasirRekapFilterDefaulted) {
+                var dk = new Date();
+                var blnDef = String(dk.getMonth() + 1).padStart(2, '0');
+                var thnDef = String(dk.getFullYear());
+                var blnEl = document.getElementById('filter-kasir-rekap-bulan');
+                var thnEl = document.getElementById('filter-kasir-rekap-tahun');
+                if (blnEl) blnEl.value = blnDef;
+                if (thnEl) thnEl.value = thnDef;
+                kasirRekapFilterDefaulted = true;
+            }
             showLoading("Memuat rekap kredit...");
             google.script.run.withSuccessHandler(function (res) {
                 hideLoading();
