@@ -8416,16 +8416,14 @@
                 });
 
                 var total = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.sisa) || 0); }, 0);
-                var totTransSutomo = 0, totTransInka = 0, totSisaSutomo = 0, totSisaInka = 0;
+                var totTransSutomo = 0, totTransInka = 0;
                 filteredHutangAdmin.forEach(function (h) {
-                    var isSutomo = h.store === 'SUTOMO';
-                    if (isSutomo) { totTransSutomo += Number(h.nilai) || 0; totSisaSutomo += Number(h.sisa) || 0; }
-                    else { totTransInka += Number(h.nilai) || 0; totSisaInka += Number(h.sisa) || 0; }
+                    if (h.store === 'SUTOMO') totTransSutomo += Number(h.nilai) || 0;
+                    else totTransInka += Number(h.nilai) || 0;
                 });
-                var totSisa = totSisaSutomo + totSisaInka;
-                var jasaSutomo = totSisa > 0 ? Math.round(rawHutangAdminJasa * totSisaSutomo / totSisa) : 0;
-                var jasaInka = rawHutangAdminJasa - jasaSutomo;
-                safeSetText('stat-kredit-toko-total', 'Rp ' + (total + rawHutangAdminJasa).toLocaleString('id-ID'));
+                var jasaSutomo = Math.round(totTransSutomo * 0.015);
+                var jasaInka = Math.round(totTransInka * 0.015);
+                safeSetText('stat-kredit-toko-total', 'Rp ' + (total + jasaSutomo + jasaInka).toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-jasa-sutomo', 'Rp ' + jasaSutomo.toLocaleString('id-ID'));
                 safeSetText('stat-kredit-toko-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
@@ -8639,26 +8637,25 @@
             if (filteredHutangAdmin.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
             var d = [["Waktu", "No Anggota", "Nama", "Nota", "Kode Transaksi", "Nominal", "Status"]];
             filteredHutangAdmin.forEach(function (h) { d.push([h.waktu, h.noAnggota, h.nama, h.nota || '-', h.kodeVoucher || h.id, Number(h.nilai) || 0, h.status]); });
-            var totNominal = 0, totBayar = 0, totSisa = 0, totTransSutomo = 0, totTransInka = 0, totSisaSutomo = 0, totSisaInka = 0;
+            var totNominal = 0, totBayar = 0, totSisa = 0, totTransSutomo = 0, totTransInka = 0;
             filteredHutangAdmin.forEach(function (h) {
                 totNominal += Number(h.nilai) || 0;
                 totBayar += Number(h.dibayar) || 0;
                 totSisa += Number(h.sisa) || 0;
-                if (h.store === 'SUTOMO') { totTransSutomo += Number(h.nilai) || 0; totSisaSutomo += Number(h.sisa) || 0; }
-                else { totTransInka += Number(h.nilai) || 0; totSisaInka += Number(h.sisa) || 0; }
+                if (h.store === 'SUTOMO') totTransSutomo += Number(h.nilai) || 0;
+                else totTransInka += Number(h.nilai) || 0;
             });
-            var totSisaAll = totSisaSutomo + totSisaInka;
-            var jasaSutomo = totSisaAll > 0 ? Math.round(rawHutangAdminJasa * totSisaSutomo / totSisaAll) : 0;
-            var jasaInka = rawHutangAdminJasa - jasaSutomo;
+            var jasaSutomo = Math.round(totTransSutomo * 0.015);
+            var jasaInka = Math.round(totTransInka * 0.015);
             d.push([]);
             d.push(['', 'TOTAL', '', '', '', totNominal]);
             d.push([]);
             d.push(['Transaksi Toko Sutomo', '', '', '', '', totTransSutomo, '']);
-            d.push(['Jasa Toko Sutomo (1,5%/bln)', '', '', '', '', jasaSutomo, '']);
+            d.push(['Jasa Toko Sutomo (1,5%)', '', '', '', '', jasaSutomo, '']);
             d.push(['Transaksi Toko INKA', '', '', '', '', totTransInka, '']);
-            d.push(['Jasa Toko INKA (1,5%/bln)', '', '', '', '', jasaInka, '']);
+            d.push(['Jasa Toko INKA (1,5%)', '', '', '', '', jasaInka, '']);
             d.push([]);
-            d.push(['Catatan: Total tagihan tertunda = ' + (totSisa + rawHutangAdminJasa).toLocaleString('id-ID') + ' (termasuk biaya jasa 1,5%/bln sebesar ' + rawHutangAdminJasa.toLocaleString('id-ID') + ').']);
+            d.push(['Catatan: Total tagihan tertunda = ' + (totSisa + jasaSutomo + jasaInka).toLocaleString('id-ID') + ' (termasuk biaya jasa 1,5% sebesar ' + (jasaSutomo + jasaInka).toLocaleString('id-ID') + ').']);
             var ws = XLSX.utils.aoa_to_sheet(d); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap_Kredit"); XLSX.writeFile(wb, "Rekap_Kredit_Toko.xlsx");
         }
 
@@ -9506,21 +9503,15 @@ var skel = '';
         }
 
         function renderKasirRekapStats() {
-            var total = 0, totTransSutomo = 0, totTransInka = 0, totSisaSutomo = 0, totSisaInka = 0;
+            var total = 0, totTransSutomo = 0, totTransInka = 0;
             kasirRekapFiltered.forEach(function (h) {
                 total += Number(h.sisa) || 0;
-                if (h.store === 'SUTOMO') {
-                    totTransSutomo += Number(h.nilai) || 0;
-                    totSisaSutomo += Number(h.sisa) || 0;
-                } else {
-                    totTransInka += Number(h.nilai) || 0;
-                    totSisaInka += Number(h.sisa) || 0;
-                }
+                if (h.store === 'SUTOMO') totTransSutomo += Number(h.nilai) || 0;
+                else totTransInka += Number(h.nilai) || 0;
             });
-            var totSisa = totSisaSutomo + totSisaInka;
-            var jasaSutomo = totSisa > 0 ? Math.round(kasirRekapJasa * totSisaSutomo / totSisa) : 0;
-            var jasaInka = kasirRekapJasa - jasaSutomo;
-            safeSetText('krk-stat-total', 'Rp ' + (total + kasirRekapJasa).toLocaleString('id-ID'));
+            var jasaSutomo = Math.round(totTransSutomo * 0.015);
+            var jasaInka = Math.round(totTransInka * 0.015);
+            safeSetText('krk-stat-total', 'Rp ' + (total + jasaSutomo + jasaInka).toLocaleString('id-ID'));
             safeSetText('krk-stat-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
             safeSetText('krk-stat-jasa-sutomo', 'Rp ' + jasaSutomo.toLocaleString('id-ID'));
             safeSetText('krk-stat-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
