@@ -2323,6 +2323,8 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
 
       if (!_matchPeriod(waktuStr)) continue;
 
+      var kategoriNota = _kategoriNota(String(row[2]));
+
       result.push({
         waktu: waktuStr,
         waktuRaw: tglObj ? tglObj.getTime() : 0,
@@ -2331,6 +2333,9 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
         toko: String(row[3]),
         petugas: String(row[4]),
         nilai: nilaiRow,
+        kategori: kategoriNota,
+        nilaiTkst: kategoriNota === 'TKST' ? nilaiRow : 0,
+        nilaiLain: kategoriNota === 'TKST' ? 0 : nilaiRow,
         noAnggota: noAnggota,
         nama: userMap[noAnggota] || "-",
         noHp: hpMap[noAnggota] || "",
@@ -2338,6 +2343,8 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
         status: sts,
         dibayar: used,
         sisa: sisa,
+        sisaTkst: kategoriNota === 'TKST' ? sisa : 0,
+        sisaLain: kategoriNota === 'TKST' ? 0 : sisa,
         notif: notif,
         verifikasiFileId: String(row[7] || ""),
         memberLimit: effLimit
@@ -2369,6 +2376,13 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
 // BIAYA JASA KREDIT TOKO (1,5% PER BULAN ATAS SISA BELUM LUNAS)
 // =====================================================
 function _getBiayaJasaRate() { return 0.015; }
+
+// Kategori nota berdasarkan kode nota: nota dengan prefix TKST vs lainnya.
+function _kategoriNota(notaRaw) {
+  var n = String(notaRaw || '').replace(/^'/, '').trim().toUpperCase();
+  if (n.indexOf('TKST') === 0) return 'TKST';
+  return 'Lainnya';
+}
 
 // Normalisasi seluruh baris piutang menjadi event kredit per anggota (urut waktu)
 function _buildPiutangEvents(dataPiutang) {
