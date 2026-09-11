@@ -3594,17 +3594,16 @@
                         <tr>
                             <th>Waktu</th>
                             <th>Nota</th>
-                            <th>Kode</th>
-                            <th>Nilai</th>
-                            <th>Dibayar</th>
-                            <th>Sisa</th>
-                            <th>Status</th>
+                            <th>Kode Transaksi</th>
+                            <th>Toko</th>
+                            <th>Petugas</th>
+                            <th>Nominal</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="anggota-kredit-toko-list">
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:20px; color:#777;">Memuat data kredit
+                            <td colspan="7" style="text-align:center; padding:20px; color:#777;">Memuat data kredit
                                 toko...</td>
                         </tr>
                     </tbody>
@@ -6291,7 +6290,7 @@
                         myKreditTokoData = [];
                         myKreditTokoFiltered = [];
                         myKreditTokoSummary = { global: Number(userToko.limitPiutang) || 0, outstanding: 0, effective: 0, terpakai: 0, biayaJasa: 0 };
-                        document.getElementById('anggota-kredit-toko-list').innerHTML = '<tr><td colspan="8" style="text-align:center; color:#777;">' + (res && res.msg ? res.msg : 'Data tidak ditemukan.') + '</td></tr>';
+                        document.getElementById('anggota-kredit-toko-list').innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">' + (res && res.msg ? res.msg : 'Data tidak ditemukan.') + '</td></tr>';
                         renderKreditTokoSummary();
                     }
                 })
@@ -6388,7 +6387,7 @@
             renderKreditTokoSummary();
 
             if (myKreditTokoFiltered.length === 0) {
-                tb.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#777;">Data tidak ditemukan sesuai filter.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Data tidak ditemukan sesuai filter.</td></tr>';
                 var pagEl = document.getElementById('pag-kt-anggota');
                 if (pagEl) pagEl.style.display = 'none';
                 return;
@@ -6407,11 +6406,9 @@
             pagData.forEach(function (it, i) {
                 var globalIdx = start + i;
                 var v = Number(it.nilai) || 0;
-                var sisaN = Number(it.sisa) || 0;
-                var isLunas = sisaN <= 0;
                 var waToko = getWaTokoByName(it.toko);
                 var btnTanya = waToko ? '<button style="background:#25D366; padding:5px 10px; font-size:10px; width:auto;" onclick="tanyakanDetailPembelian(' + globalIdx + ')" title="Tanyakan detail pembelian ke toko via WA"><i class="bi bi-whatsapp"></i> Tanya Detail</button>' : '';
-                tb.innerHTML += '<tr><td>' + it.waktu + '</td><td>' + (it.nota || '-') + '</td><td>' + (it.kodeVoucher || it.id || '-') + '</td><td style="text-align:right;">Rp ' + v.toLocaleString('id-ID') + '</td><td style="text-align:right; color:#27ae60;">Rp ' + (Number(it.dibayar) || 0).toLocaleString('id-ID') + '</td><td style="text-align:right; color:#e74c3c; font-weight:700;">Rp ' + sisaN.toLocaleString('id-ID') + '</td><td style="text-align:center;">' + (isLunas ? '<span style="display:inline-flex; align-items:center; gap:5px; background:#e8f8ef; color:#1e8e3e; border:1px solid #b7e7c8; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-check2-circle"></i> Lunas</span>' : '<span style="display:inline-flex; align-items:center; gap:5px; background:#fef4e6; color:#b45309; border:1px solid #fcd9a8; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-clock-history"></i> Belum Lunas</span>') + '</td><td style="white-space:nowrap;">' + btnTanya + ' <button style="background:#3498db; padding:5px 10px; font-size:10px; width:auto;" onclick="lihatDetailKreditTokoUser(' + globalIdx + ')"><i class="bi bi-eye-fill"></i> Detail</button></td></tr>';
+                tb.innerHTML += '<tr><td>' + it.waktu + '</td><td>' + (it.nota || '-') + '</td><td>' + (it.kodeVoucher || it.id || '-') + '</td><td>' + (it.toko || '-') + '</td><td>' + (it.petugas || '-') + '</td><td style="text-align:right;">Rp ' + v.toLocaleString('id-ID') + '</td><td style="white-space:nowrap;">' + btnTanya + ' <button style="background:#3498db; padding:5px 10px; font-size:10px; width:auto;" onclick="lihatDetailKreditTokoUser(' + globalIdx + ')"><i class="bi bi-eye-fill"></i> Detail</button></td></tr>';
             });
 
             safeSetText('page-info-kt-anggota', 'Hal ' + myKreditTokoPage + ' / ' + tot);
@@ -8706,9 +8703,9 @@
             // Show skeleton
             var tb = document.querySelector('#tabel-rekap-anggota tbody');
             if (tb) {
-                var skel = '';
+var skel = '';
                 for (var si = 0; si < 5; si++) {
-                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
                 }
                 tb.innerHTML = skel;
             }
