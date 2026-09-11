@@ -3324,7 +3324,7 @@
             <div class="filter-container" style="background:#f9f9f9;">
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
                     <input type="text" id="search-kasir-rekap" style="flex:2; min-width:150px;"
-                        placeholder="🔍 Cari Nama / No Anggota / Nota / Kode..." oninput="applyFilterKasirRekap()">
+                        placeholder="🔍 Cari Nama / No Anggota..." oninput="applyFilterKasirRekap()">
                     <select id="filter-kasir-rekap-bulan" class="filter-select" style="flex:1; min-width:120px; max-width:150px;"
                         onchange="applyFilterKasirRekap()">
                         <option value="ALL">Semua Bulan</option>
@@ -9477,7 +9477,7 @@ var skel = '';
 
             kasirRekapFiltered = kasirRekapData.filter(function (h) {
                 if (q !== '') {
-                    var hay = ((h.noAnggota || '') + ' ' + (h.nama || '') + ' ' + (h.nota || '') + ' ' + (h.id || '') + ' ' + (h.kodeVoucher || '')).toLowerCase();
+                    var hay = ((h.noAnggota || '') + ' ' + (h.nama || '')).toLowerCase();
                     if (hay.indexOf(q) === -1) return false;
                 }
                 if (bln !== 'ALL' || thn !== '') {
