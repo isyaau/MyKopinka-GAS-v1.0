@@ -5535,6 +5535,58 @@
             }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', String(err), 'error'); }).prosesVoucher(k, 'cek', getKasirInfo(), null);
         }
 
+        var _BULAN_NAMES_FULL = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        var _rpSeq = 0;
+
+        function ringkasanPemakaianHtml(outstanding, noAnggota) {
+            _rpSeq++;
+            var uid = 'rp-' + _rpSeq;
+            var h = '';
+            h += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:2px solid #f1f2f6; padding-bottom:10px;">';
+            h += '<span style="font-size:20px;"><i class="bi bi-bar-chart-fill" style="color:#3498db;"></i></span> <h4 style="margin:0; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Ringkasan Pemakaian</h4>';
+            h += '</div>';
+            h += '<div style="display:flex; flex-direction:column; gap:8px;">';
+            h += '<div style="display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,#b45309,#f59e0b); color:#fff; padding:12px 14px; border-radius:10px; box-shadow:0 3px 10px rgba(217,119,6,.25);">';
+            h += '<span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px;" id="' + uid + '-curlabel">Bulan Berjalan</span>';
+            h += '<span style="font-size:15px; font-weight:900;" id="' + uid + '-cur">Rp -</span>';
+            h += '</div>';
+            h += '<div id="' + uid + '-months" style="display:flex; flex-direction:column; gap:4px; max-height:230px; overflow-y:auto; padding-right:2px;"></div>';
+            h += '<div style="display:flex; justify-content:space-between; border-top:2px solid #f1f2f6; margin-top:6px; padding:10px 4px 0;">';
+            h += '<span style="font-size:10px; font-weight:bold; color:#64748b;">TOTAL PEMAKAIAN</span>';
+            h += '<span style="font-size:13px; font-weight:800; color:#9a3412;">Rp ' + (Number(outstanding) || 0).toLocaleString('id-ID') + '</span>';
+            h += '</div>';
+            h += '</div>';
+            loadPemakaianBulanan(noAnggota, uid);
+            return h;
+        }
+
+        function loadPemakaianBulanan(noAnggota, uid) {
+            google.script.run.withSuccessHandler(function (res) {
+                if (!res || res.status !== 'sukses' || !res.months) return;
+                var cur = Number(res.currentMonth) || (new Date().getMonth() + 1);
+                var tahun = Number(res.tahun) || new Date().getFullYear();
+                var curTotal = 0;
+                res.months.forEach(function (mm) { if (Number(mm.m) === cur) curTotal = Number(mm.total) || 0; });
+                var curLabelEl = document.getElementById(uid + '-curlabel');
+                var curEl = document.getElementById(uid + '-cur');
+                var monthsEl = document.getElementById(uid + '-months');
+                if (curLabelEl) curLabelEl.textContent = (_BULAN_NAMES_FULL[cur - 1] || 'Bulan') + ' ' + tahun;
+                if (curEl) curEl.textContent = 'Rp ' + curTotal.toLocaleString('id-ID');
+                if (monthsEl) {
+                    var rows = '';
+                    res.months.forEach(function (mm) {
+                        var isCur = Number(mm.m) === cur;
+                        var amt = Number(mm.total) || 0;
+                        rows += '<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 9px; border-radius:8px;' + (isCur ? 'background:#fff7ed;' : 'background:#f8fafc;') + '">';
+                        rows += '<span style="font-size:11px;' + (isCur ? 'color:#c2410c; font-weight:800;' : 'color:#475569;') + '">' + (_BULAN_NAMES_FULL[Number(mm.m) - 1] || mm.m) + ' ' + tahun + '</span>';
+                        rows += '<span style="font-size:12px; font-weight:700;' + (isCur ? 'color:#9a3412;' : 'color:#334155;') + '">Rp ' + amt.toLocaleString('id-ID') + '</span>';
+                        rows += '</div>';
+                    });
+                    monthsEl.innerHTML = rows;
+                }
+            }).withFailureHandler(function () { }).getPemakaianBulananMember(noAnggota);
+        }
+
         function cekMemberUI() {
             var u = document.getElementById('no-anggota-status').value.trim();
             if (!u) return Swal.fire('Perhatian', 'Ketik No Anggota!', 'warning');
@@ -5571,16 +5623,7 @@
                         '</div>' +
                         '</div>' +
                         '</div>' +
-                        '<div class="piutang-card" style="width:100%; max-width:400px; margin:0; box-shadow: 0 10px 30px rgba(31, 73, 125, 0.08); border-radius: 20px; background:#fff; padding:20px;">' +
-                        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:2px solid #f1f2f6; padding-bottom:10px;">' +
-                        '<span style="font-size:20px;"><i class="bi bi-bar-chart-fill" style="color:#3498db;"></i></span> <h4 style="margin:0; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Ringkasan Pemakaian</h4>' +
-                        '</div>' +
-                        '<div style="display:flex; flex-direction:column; gap:10px;">' +
-                        '<div style="display:flex; justify-content:space-between; background:#fff7ed; padding:10px; border-radius:10px;">' +
-                        '<span style="font-size:10px; font-weight:bold; color:#c2410c;">PEMAKAIAN</span>' +
-                        '<span style="font-size:13px; font-weight:800; color:#9a3412;">Rp ' + terpakaiCard.toLocaleString('id-ID') + '</span>' +
-                        '</div>' +
-                        '</div>' +
+                        '<div class="piutang-card" style="width:100%; max-width:400px; margin:0; box-shadow: 0 10px 30px rgba(31, 73, 125, 0.08); border-radius: 20px; background:#fff; padding:20px;">' + ringkasanPemakaianHtml(terpakaiCard, res.info.username) +
                         '</div>' +
                         '</div>';
 
@@ -5693,16 +5736,7 @@
                             '</div>' +
                             '</div>' +
                             (isBlokir ? '<div style="width:100%; max-width:400px; background:#fff0f0; border:2px solid #e74c3c; border-radius:14px; padding:16px; text-align:center; color:#c0392b; font-weight:bold; font-size:14px; margin-top:-10px;"><i class="bi bi-ban"></i> ANGGOTA INI DIBLOKIR PIUTANG</div>' : '') +
-                            '<div class="piutang-card" style="width:100%; max-width:320px; margin:0; background:#fff; border-radius:20px; padding:20px; border:1px solid #e2e8f0; display:flex; flex-direction:column; justify-content:center;">' +
-                            '<div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:2px solid #f1f2f6; padding-bottom:10px;">' +
-                            '<span style="font-size:20px;"><i class="bi bi-bar-chart-fill" style="color:#3498db;"></i></span> <h4 style="margin:0; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Ringkasan Pemakaian</h4>' +
-                            '</div>' +
-                            '<div style="display:flex; flex-direction:column; gap:12px;">' +
-                            '<div style="display:flex; justify-content:space-between; background:#fff5f5; padding:10px; border-radius:10px;">' +
-                            '<span style="font-size:10px; font-weight:bold; color:#e53e3e;">PEMAKAIAN</span>' +
-                            '<span style="font-size:13px; font-weight:800; color:#c53030;">' + fmtLimitRp(terpakai) + '</span>' +
-                            '</div>' +
-                            '</div>' +
+                            '<div class="piutang-card" style="width:100%; max-width:320px; margin:0; background:#fff; border-radius:20px; padding:20px; border:1px solid #e2e8f0; display:flex; flex-direction:column; justify-content:center;">' + ringkasanPemakaianHtml(terpakai, res.info.username) +
                             '</div>' +
                             '</div>';
                         mInfo.innerHTML = cardHtml;
@@ -5839,17 +5873,7 @@
                             '        </div>',
                             '    </div>',
                             (isBlokir ? '<div style="width:100%; max-width:400px; background:#fff0f0; border:2px solid #e74c3c; border-radius:14px; padding:16px; text-align:center; color:#c0392b; font-weight:bold; font-size:14px; margin-top:-10px;"><i class="bi bi-ban"></i> ANGGOTA INI DIBLOKIR PIUTANG</div>' : ''),
-                            '    <div class="piutang-card" style="width:100%; max-width:400px; margin:0; box-shadow: 0 10px 30px rgba(31, 73, 125, 0.08); border-radius: 20px; background:#fff; padding:20px;">',
-                            '        <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px; border-bottom:2px solid #f1f2f6; padding-bottom:10px;">',
-                            '            <span style="font-size:20px;">📊</span> <h4 style="margin:0; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Ringkasan Pemakaian</h4>',
-                            '        </div>',
-                            '        <div style="display:flex; flex-direction:column; gap:10px;">',
-                            '            <div style="display:flex; justify-content:space-between; background:#fff7ed; padding:10px; border-radius:10px;">',
-                            '                <span style="font-size:10px; font-weight:bold; color:#c2410c;">PEMAKAIAN</span>',
-                            '                <span style="font-size:13px; font-weight:800; color:#9a3412;">Rp ' + outstandingCard.toLocaleString('id-ID') + '</span>',
-                            '            </div>',
-                            '        </div>',
-                            '    </div>',
+                            '    <div class="piutang-card" style="width:100%; max-width:400px; margin:0; box-shadow: 0 10px 30px rgba(31, 73, 125, 0.08); border-radius: 20px; background:#fff; padding:20px;">' + ringkasanPemakaianHtml(outstandingCard, piutangVerifiedMember.username) + '</div>',
                             '</div>'
                         ].join('');
                     }

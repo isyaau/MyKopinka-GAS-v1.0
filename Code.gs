@@ -1482,6 +1482,27 @@ function cariVoucherMulti(noAnggota) {
   } catch (e) { return { status: 'error', msg: e.toString() }; }
 }
 
+// Ringkasan pemakaian per bulan (12 bulan tahun berjalan) untuk kartu kasir/anggota.
+function getPemakaianBulananMember(noAnggota) {
+  try {
+    var tahun = new Date().getFullYear();
+    var data = _getCachedPiutangData();
+    var totals = {};
+    var q = String(noAnggota).trim();
+    for (var i = 1; i < data.length; i++) {
+      var nM = String(data[i][6]).replace(/'/g, '').trim();
+      if (nM !== q) continue;
+      var tgl = _parseDate(data[i][0]);
+      if (!tgl || tgl.getFullYear() !== tahun) continue;
+      var m = tgl.getMonth() + 1;
+      totals[m] = (Number(totals[m]) || 0) + (Number(data[i][5]) || 0);
+    }
+    var months = [];
+    for (var m = 1; m <= 12; m++) months.push({ m: m, total: Math.round(Number(totals[m]) || 0) });
+    return { status: 'sukses', tahun: tahun, currentMonth: new Date().getMonth() + 1, months: months };
+  } catch (e) { return { status: 'error', msg: e.toString() }; }
+}
+
 function redeemMassal(arrKode, userToko, notaToko) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
