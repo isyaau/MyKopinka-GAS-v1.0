@@ -3379,13 +3379,13 @@
                     <thead>
                         <tr>
                             <th>Waktu</th>
-                            <th>No. Anggota</th>
+                            <th>No Anggota</th>
                             <th>Nama Pelanggan</th>
                             <th>Nota</th>
-                            <th>Kode/ID</th>
-                            <th>Nilai</th>
-                            <th>Dibayar</th>
-                            <th>Sisa</th>
+                            <th>Kode Transaksi</th>
+                            <th>Toko</th>
+                            <th>Petugas</th>
+                            <th>Nominal</th>
                             <th>Notifikasi</th>
                             <th>Aksi</th>
                         </tr>
@@ -9526,27 +9526,21 @@ var skel = '';
                 rows.forEach(function (h, i) {
                     var globalIdx = start + i;
                     var nilai = Number(h.nilai) || 0;
-                    var dibayar = Number(h.dibayar) || 0;
-                    var sisa = Number(h.sisa) || 0;
                     var kode = h.id || h.kodeVoucher || '-';
-                    var sts = h.status || (sisa <= 0 ? 'Lunas' : 'Belum Lunas');
                     var notif = (h.notif || '').toString();
                     var chipNotif = '<span style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:12px; font-size:11px;">' + notif + '</span>';
                     if (notif === 'Terkirim') chipNotif = '<span style="background:#e8f5e9; color:#2e7d32; padding:2px 8px; border-radius:12px; font-size:11px;"><i class="bi bi-check-circle-fill"></i> Terkirim</span>';
                     else if (notif !== '') chipNotif = '<span style="background:#fff8e1; color:#f57f17; padding:2px 8px; border-radius:12px; font-size:11px;"><i class="bi bi-clock-fill"></i> ' + notif + '</span>';
-                    var stsBadge = sts === 'Lunas'
-                        ? '<span style="background:#e8f5e9; color:#2e7d32; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;">Lunas</span>'
-                        : '<span style="background:#fce4ec; color:#c62828; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;">Belum Lunas</span>';
 
                     html += '<tr>' +
                         '<td style="white-space:nowrap;">' + (h.waktu || '-') + '</td>' +
                         '<td><b>' + (h.noAnggota || '-') + '</b></td>' +
-                        '<td>' + (h.nama || '-') + '<br><small style="color:#718096; font-size:11px;">' + stsBadge + '</small></td>' +
+                        '<td>' + (h.nama || '-') + '</td>' +
                         '<td>' + (h.nota || '-') + '</td>' +
                         '<td style="font-size:12px;">' + kode + '</td>' +
+                        '<td>' + (h.toko || '-') + '</td>' +
+                        '<td>' + (h.petugas || '-') + '</td>' +
                         '<td style="text-align:right;">' + nilai.toLocaleString('id-ID') + '</td>' +
-                        '<td style="text-align:right;">' + dibayar.toLocaleString('id-ID') + '</td>' +
-                        '<td style="text-align:right;"><b style="color:' + (sisa > 0 ? '#c0392b' : '#16a085') + ';">' + sisa.toLocaleString('id-ID') + '</b></td>' +
                         '<td>' + chipNotif + '</td>' +
                         '<td style="text-align:center;">' +
                         '<button class="btn-page" style="background:#25D366; border-color:#25D366; color:#fff; white-space:nowrap;" onclick="kirimUlangWaKasir(' + globalIdx + ')"><i class="bi bi-whatsapp"></i> Kirim Ulang</button>' +
