@@ -17,7 +17,7 @@ var FOLDER_KREDIT_TOKO_ID = "1zFKB6N4vjpJtnY1k_G6c1hutIhshLYyW";
 
 function doGet(e) {
   return HtmlService.createTemplateFromFile('index').evaluate()
-      .setTitle('Portal Kopinka v19.0')
+      .setTitle('Portal Kopinka v1.0')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
