@@ -3348,20 +3348,18 @@
 
             <div class="admin-card-container" id="kasir-rekap-stats" style="margin-top:14px;">
                 <div class="admin-card ac-red">
-                    <h4>Total Piutang</h4>
-                    <div class="angka" id="krk-stat-nilai">Rp 0</div>
+                    <h4>Total Tagihan Tertunda <span style="font-weight:400;">(termasuk biaya jasa)</span></h4>
+                    <div class="angka" id="krk-stat-total">Rp 0</div>
                 </div>
                 <div class="admin-card ac-green">
-                    <h4>Total Dibayar</h4>
-                    <div class="angka" id="krk-stat-dibayar">Rp 0</div>
+                    <h4>Transaksi Toko Sutomo</h4>
+                    <div class="angka" id="krk-stat-trans-sutomo">Rp 0</div>
+                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko Sutomo: <b id="krk-stat-jasa-sutomo">Rp 0</b></div>
                 </div>
-                <div class="admin-card ac-red">
-                    <h4>Sisa Tagihan</h4>
-                    <div class="angka" id="krk-stat-sisa">Rp 0</div>
-                </div>
-                <div class="admin-card">
-                    <h4>Jumlah Transaksi</h4>
-                    <div class="angka" id="krk-stat-jumlah">0</div>
+                <div class="admin-card ac-blue">
+                    <h4>Transaksi Toko INKA</h4>
+                    <div class="angka" id="krk-stat-trans-inka">Rp 0</div>
+                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko INKA: <b id="krk-stat-jasa-inka">Rp 0</b></div>
                 </div>
             </div>
 
@@ -9450,6 +9448,7 @@ var skel = '';
         // ==========================================
         var kasirRekapData = [];
         var kasirRekapFiltered = [];
+        var kasirRekapJasa = 0;
         var kasirRekapPage = 1;
         var KASIR_REKAP_PER_HAL = 10;
 
@@ -9461,6 +9460,7 @@ var skel = '';
                     return Swal.fire('Error', 'Gagal memuat data rekap kredit.', 'error');
                 }
                 kasirRekapData = res.data;
+                kasirRekapJasa = Number(res.totalBiayaJasa) || 0;
                 kasirRekapPage = 1;
                 applyFilterKasirRekap();
             }).withFailureHandler(function (err) {
@@ -9494,20 +9494,25 @@ var skel = '';
         }
 
         function renderKasirRekapStats() {
-            var totalNilai = 0, totalDibayar = 0, totalSisa = 0;
+            var total = 0, totTransSutomo = 0, totTransInka = 0, totSisaSutomo = 0, totSisaInka = 0;
             kasirRekapFiltered.forEach(function (h) {
-                totalNilai += Number(h.nilai) || 0;
-                totalDibayar += Number(h.dibayar) || 0;
-                totalSisa += Number(h.sisa) || 0;
+                total += Number(h.sisa) || 0;
+                if (h.store === 'SUTOMO') {
+                    totTransSutomo += Number(h.nilai) || 0;
+                    totSisaSutomo += Number(h.sisa) || 0;
+                } else {
+                    totTransInka += Number(h.nilai) || 0;
+                    totSisaInka += Number(h.sisa) || 0;
+                }
             });
-            var elNilai = document.getElementById('krk-stat-nilai');
-            var elDibayar = document.getElementById('krk-stat-dibayar');
-            var elSisa = document.getElementById('krk-stat-sisa');
-            var elJumlah = document.getElementById('krk-stat-jumlah');
-            if (elNilai) elNilai.textContent = 'Rp ' + totalNilai.toLocaleString('id-ID');
-            if (elDibayar) elDibayar.textContent = 'Rp ' + totalDibayar.toLocaleString('id-ID');
-            if (elSisa) elSisa.textContent = 'Rp ' + totalSisa.toLocaleString('id-ID');
-            if (elJumlah) elJumlah.textContent = String(kasirRekapFiltered.length).toLocaleString('id-ID');
+            var totSisa = totSisaSutomo + totSisaInka;
+            var jasaSutomo = totSisa > 0 ? Math.round(kasirRekapJasa * totSisaSutomo / totSisa) : 0;
+            var jasaInka = kasirRekapJasa - jasaSutomo;
+            safeSetText('krk-stat-total', 'Rp ' + (total + kasirRekapJasa).toLocaleString('id-ID'));
+            safeSetText('krk-stat-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
+            safeSetText('krk-stat-jasa-sutomo', 'Rp ' + jasaSutomo.toLocaleString('id-ID'));
+            safeSetText('krk-stat-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
+            safeSetText('krk-stat-jasa-inka', 'Rp ' + jasaInka.toLocaleString('id-ID'));
         }
 
         function renderKasirRekapTable() {
