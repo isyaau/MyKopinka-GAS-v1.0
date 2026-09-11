@@ -2528,7 +2528,6 @@ function getRekapKreditPerAnggota(bulan, tahun) {
 
       var allocRemain = memberBayar[noAng.toLowerCase()] || 0;
       var transByStore = {};
-      var sisaByStore = {};
       var periodeTotal = 0, periodeTransaksi = 0, periodeDibayar = 0;
 
       for (var k = 0; k < rows.length; k++) {
@@ -2538,10 +2537,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
 
         var used = Math.min(r.nilai, allocRemain);
         allocRemain -= used;
-        var sisaRow = r.nilai - used;
-        if (sisaRow < 0) sisaRow = 0;
         var stKey = _storeFromNota(r.nota).key;
-        sisaByStore[stKey] = (sisaByStore[stKey] || 0) + sisaRow;
 
         // Hanya masukkan ke rekap bila baris ada di periode yang dipilih
         var inPeriod = true;
@@ -2562,19 +2558,16 @@ function getRekapKreditPerAnggota(bulan, tahun) {
       // Biaya jasa 1,5%/bulan atas sisa tagihan yang belum lunas (snapshot s/d akhir periode)
       var feeRes = _simulasiBiayaJasaMember(noAng.toLowerCase(), piutangEvents, payRows, asOf);
 
-      // Alokasi biaya jasa per toko berdasarkan proporsi sisa belum lunas anggota
-      var sisaSutomo = sisaByStore['SUTOMO'] || 0;
-      var sisaInka = sisaByStore['INKA'] || 0;
-      var sisaAll = sisaSutomo + sisaInka;
-      var jasaSutomo = sisaAll > 0 ? Math.round(feeRes.feeTotal * sisaSutomo / sisaAll) : 0;
-      var jasaInka = feeRes.feeTotal - jasaSutomo;
+      var transSutomo = transByStore['SUTOMO'] || 0;
+      var transInka = transByStore['INKA'] || 0;
+      // Biaya jasa per toko = 1,5% dari nilai transaksi toko tersebut
+      var rateJasa = _getBiayaJasaRate();
+      var jasaSutomo = Math.round(transSutomo * rateJasa);
+      var jasaInka = Math.round(transInka * rateJasa);
 
       var status;
       if (periodeTransaksi <= 0 && feeRes.balance <= 0) status = 'Tidak Ada Transaksi';
       else status = feeRes.balance <= 0 ? 'Lunas' : 'Belum Lunas';
-
-      var transSutomo = transByStore['SUTOMO'] || 0;
-      var transInka = transByStore['INKA'] || 0;
 
       var info = userMap[noAng] || { nama: '-', kelompok: '-', hp: '', email: '', statusAnggota: '' };
       aggMap[noAng] = {
@@ -2587,7 +2580,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
         totalNilai: periodeTotal,
         totalDibayar: periodeDibayar,
         sisaPiutang: feeRes.principal,
-        biayaJasa: feeRes.feeTotal,
+        biayaJasa: jasaSutomo + jasaInka,
         sisa: feeRes.balance,
         transSutomo: transSutomo,
         jasaSutomo: jasaSutomo,
