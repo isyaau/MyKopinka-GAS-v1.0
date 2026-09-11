@@ -3547,37 +3547,23 @@
                     style="background:linear-gradient(135deg,#1e3a8a,#2563eb); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(37,99,235,.28); position:relative; overflow:hidden;">
                     <i class="bi bi-cart-fill"
                         style="position:absolute; right:12px; top:12px; font-size:28px; opacity:.22;"></i>
-                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Transaksi Toko Sutomo</div>
-                    <div id="kt-toko-trans-sutomo" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
-                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Total transaksi kredit toko Sutomo</div>
-                </div>
-                <div
-                    style="background:linear-gradient(135deg,#92400e,#f59e0b); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(245,158,11,.28); position:relative; overflow:hidden;">
-                    <i class="bi bi-percent" style="position:absolute; right:12px; top:12px; font-size:28px; opacity:.22;"></i>
-                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Jasa Toko Sutomo (1,5%)</div>
-                    <div id="kt-toko-jasa-sutomo" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
-                    <div style="font-size:11px; opacity:.75; margin-top:4px;">1,5% dari transaksi toko Sutomo</div>
+                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Toko Sutomo</div>
+                    <div id="kt-toko-sutomo" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
+                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Transaksi + Jasa (1,5%)</div>
                 </div>
                 <div
                     style="background:linear-gradient(135deg,#166534,#22c55e); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(34,197,94,.28); position:relative; overflow:hidden;">
                     <i class="bi bi-cart-check-fill" style="position:absolute; right:12px; top:12px; font-size:28px; opacity:.22;"></i>
-                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Transaksi Toko INKA</div>
-                    <div id="kt-toko-trans-inka" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
-                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Total transaksi kredit toko INKA</div>
-                </div>
-                <div
-                    style="background:linear-gradient(135deg,#4c1d95,#8b5cf6); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(139,92,246,.28); position:relative; overflow:hidden;">
-                    <i class="bi bi-percent" style="position:absolute; right:12px; top:12px; font-size:28px; opacity:.22;"></i>
-                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Jasa Toko INKA (1,5%)</div>
-                    <div id="kt-toko-jasa-inka" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
-                    <div style="font-size:11px; opacity:.75; margin-top:4px;">1,5% dari transaksi toko INKA</div>
+                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Toko INKA</div>
+                    <div id="kt-toko-inka" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
+                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Transaksi + Jasa (1,5%)</div>
                 </div>
                 <div
                     style="background:linear-gradient(135deg,#7f1d1d,#ef4444); border-radius:14px; padding:18px 20px; color:#fff; box-shadow:0 6px 18px rgba(239,68,68,.28); position:relative; overflow:hidden;">
                     <i class="bi bi-wallet2" style="position:absolute; right:12px; top:12px; font-size:28px; opacity:.22;"></i>
                     <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; opacity:.85;">Total</div>
                     <div id="kt-toko-total" style="font-size:22px; font-weight:800; margin-top:8px;">Rp 0</div>
-                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Jumlah transaksi dan jasa seluruh toko</div>
+                    <div style="font-size:11px; opacity:.75; margin-top:4px;">Total seluruh toko</div>
                 </div>
             </div>
             <div id="kt-notice" class="hidden"
@@ -6327,10 +6313,8 @@
 
         function renderKreditTokoSummary() {
             var s = myKreditTokoSummary || { global: 0, outstanding: 0, effective: 0, terpakai: 0, biayaJasa: 0, transSutomo: 0, jasaSutomo: 0, transInka: 0, jasaInka: 0, totalToko: 0 };
-            safeSetText('kt-toko-trans-sutomo', fmtLimitRp(Number(s.transSutomo) || 0));
-            safeSetText('kt-toko-jasa-sutomo', 'Rp ' + (Number(s.jasaSutomo) || 0).toLocaleString('id-ID'));
-            safeSetText('kt-toko-trans-inka', fmtLimitRp(Number(s.transInka) || 0));
-            safeSetText('kt-toko-jasa-inka', 'Rp ' + (Number(s.jasaInka) || 0).toLocaleString('id-ID'));
+            safeSetText('kt-toko-sutomo', 'Rp ' + ((Number(s.transSutomo) || 0) + (Number(s.jasaSutomo) || 0)).toLocaleString('id-ID'));
+            safeSetText('kt-toko-inka', 'Rp ' + ((Number(s.transInka) || 0) + (Number(s.jasaInka) || 0)).toLocaleString('id-ID'));
             safeSetText('kt-toko-total', 'Rp ' + (Number(s.totalToko) || 0).toLocaleString('id-ID'));
             var noticeEl = document.getElementById('kt-notice');
             if (noticeEl) {
