@@ -2872,7 +2872,7 @@
                     <div style="flex:1; min-width:150px;" id="filter-kredit-toko-search-wrap">
                         <label>Cari Nama/No Anggota:</label>
                         <input type="text" id="search-kredit-toko-admin" placeholder="🔍 Cari Nama / No Anggota..."
-                            oninput="applyFilterKreditTokoAdmin()">
+                            oninput="kreditTokoSearchChanged()">
                     </div>
                     <div style="flex:1; min-width:150px;" id="filter-kredit-toko-search-anggota-wrap" class="hidden">
                         <label>Cari Nama/No Anggota:</label>
@@ -4633,6 +4633,12 @@
         var kreditTokoAdminLimit = 10;
         var currentMultiMember = null;
         var kreditTokoFilterTimer = null;
+        var _kreditTokoSearchTimer = null;
+
+        function kreditTokoSearchChanged() {
+            clearTimeout(_kreditTokoSearchTimer);
+            _kreditTokoSearchTimer = setTimeout(function () { loadRekapHutangAdmin(true); }, 250);
+        }
         var kreditTokoFilterBusy = false;
 
         function showSkeletonKreditTokoAdmin() {
@@ -8090,7 +8096,7 @@
             var elBln = document.getElementById('filter-kredit-toko-bulan');
             if (!elBln) return;
             var now = new Date();
-            safeSetValue('filter-kredit-toko-bulan', 'ALL');
+            safeSetValue('filter-kredit-toko-bulan', String(now.getMonth() + 1));
             safeSetValue('filter-kredit-toko-tahun', now.getFullYear());
             safeSetValue('filter-kredit-toko-start', '');
             safeSetValue('filter-kredit-toko-end', '');
@@ -8107,7 +8113,7 @@
                 tb.innerHTML = skel;
                 showLoading("Memuat Data Kredit Toko...");
             }
-            var bln = '', thn = '', sd = '', ed = '';
+            var bln = '', thn = '', sd = '', ed = '', q = '';
             var elBln = document.getElementById('filter-kredit-toko-bulan');
             if (elBln) bln = elBln.value;
             var elThn = document.getElementById('filter-kredit-toko-tahun');
@@ -8116,12 +8122,14 @@
             if (elSd) sd = elSd.value;
             var elEd = document.getElementById('filter-kredit-toko-end');
             if (elEd) ed = elEd.value;
+            var elQ = document.getElementById('search-kredit-toko-admin');
+            if (elQ) q = elQ.value.trim();
             try {
                 google.script.run.withSuccessHandler(function (dbg) {
                     console.log('DEBUG PIUTANG:', JSON.stringify(dbg));
-                }).debugPiutang(bln, thn, sd, ed);
+                }).debugPiutang(bln, thn, sd, ed, q);
 
-                console.log('FILTER DIPAKAI:', JSON.stringify({ bln: bln, thn: thn, sd: sd, ed: ed }));
+                console.log('FILTER DIPAKAI:', JSON.stringify({ bln: bln, thn: thn, sd: sd, ed: ed, q: q }));
 
                 google.script.run.withSuccessHandler(function (res) {
                     console.log('REKAP KREDIT TOKO RESULT:', res.status, 'data count:', res.data ? res.data.length : 0);
@@ -8146,7 +8154,7 @@
                     hideLoading();
                     if (rawDataHutangAdmin && rawDataHutangAdmin.length > 0) applyFilterKreditTokoAdmin();
                     if (!silent) Swal.fire('Error', String(err), 'error');
-                }).getSemuaPiutangAdmin(bln, thn, sd, ed);
+                }).getSemuaPiutangAdmin(bln, thn, sd, ed, q);
             } catch (e) {
                 hideLoading();
                 if (!silent) Swal.fire('Error', 'Gagal memanggil fungsi server: ' + e.message, 'error');
