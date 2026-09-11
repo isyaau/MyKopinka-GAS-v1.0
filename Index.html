@@ -4953,7 +4953,7 @@
                 // Reset to detail sub-tab
                 switchSubTabKreditToko('detail');
                 var d = new Date();
-                safeSetValue('filter-kredit-toko-bulan', 'ALL');
+                safeSetValue('filter-kredit-toko-bulan', String(d.getMonth() + 1));
                 safeSetValue('filter-kredit-toko-tahun', d.getFullYear());
                 safeSetValue('filter-kredit-toko-start', '');
                 safeSetValue('filter-kredit-toko-end', '');
