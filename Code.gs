@@ -2323,7 +2323,7 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
 
       if (!_matchPeriod(waktuStr)) continue;
 
-      var kategoriNota = _kategoriNota(String(row[2]));
+      var stNota = _storeFromNota(String(row[2]));
 
       result.push({
         waktu: waktuStr,
@@ -2333,9 +2333,8 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
         toko: String(row[3]),
         petugas: String(row[4]),
         nilai: nilaiRow,
-        kategori: kategoriNota,
-        nilaiTkst: kategoriNota === 'TKST' ? nilaiRow : 0,
-        nilaiLain: kategoriNota === 'TKST' ? 0 : nilaiRow,
+        store: stNota.key,
+        storeNama: stNota.nama,
         noAnggota: noAnggota,
         nama: userMap[noAnggota] || "-",
         noHp: hpMap[noAnggota] || "",
@@ -2343,8 +2342,6 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
         status: sts,
         dibayar: used,
         sisa: sisa,
-        sisaTkst: kategoriNota === 'TKST' ? sisa : 0,
-        sisaLain: kategoriNota === 'TKST' ? 0 : sisa,
         notif: notif,
         verifikasiFileId: String(row[7] || ""),
         memberLimit: effLimit
@@ -2377,11 +2374,11 @@ function getSemuaPiutangAdmin(bln, thn, startDate, endDate) {
 // =====================================================
 function _getBiayaJasaRate() { return 0.015; }
 
-// Kategori nota berdasarkan kode nota: nota dengan prefix TKST vs lainnya.
-function _kategoriNota(notaRaw) {
+// Toko asal nota berdasarkan awalan kode nota: prefix TKST = Toko Sutomo, selainnya = Toko INKA.
+function _storeFromNota(notaRaw) {
   var n = String(notaRaw || '').replace(/^'/, '').trim().toUpperCase();
-  if (n.indexOf('TKST') === 0) return 'TKST';
-  return 'Lainnya';
+  if (n.indexOf('TKST') === 0) return { key: 'SUTOMO', nama: 'Toko Sutomo' };
+  return { key: 'INKA', nama: 'Toko INKA' };
 }
 
 // Normalisasi seluruh baris piutang menjadi event kredit per anggota (urut waktu)
@@ -2502,7 +2499,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
       var tglObj = _parseDate(row[0]);
       if (!tglObj) continue;
       if (!rowsByMember[noAnggota]) rowsByMember[noAnggota] = [];
-      rowsByMember[noAnggota].push({ tgl: tglObj, tglTime: tglObj.getTime(), nilai: Number(row[5]) || 0 });
+      rowsByMember[noAnggota].push({ tgl: tglObj, tglTime: tglObj.getTime(), nilai: Number(row[5]) || 0, nota: String(row[2] || '') });
     }
 
     // Gabungan seluruh anggota (userMap) + anggota yang ada piutang tapi tidak
@@ -2530,6 +2527,8 @@ function getRekapKreditPerAnggota(bulan, tahun) {
       rows.sort(function (a, b) { return a.tglTime - b.tglTime; });
 
       var allocRemain = memberBayar[noAng.toLowerCase()] || 0;
+      var transByStore = {};
+      var sisaByStore = {};
       var periodeTotal = 0, periodeTransaksi = 0, periodeDibayar = 0;
 
       for (var k = 0; k < rows.length; k++) {
@@ -2539,6 +2538,10 @@ function getRekapKreditPerAnggota(bulan, tahun) {
 
         var used = Math.min(r.nilai, allocRemain);
         allocRemain -= used;
+        var sisaRow = r.nilai - used;
+        if (sisaRow < 0) sisaRow = 0;
+        var stKey = _storeFromNota(r.nota).key;
+        sisaByStore[stKey] = (sisaByStore[stKey] || 0) + sisaRow;
 
         // Hanya masukkan ke rekap bila baris ada di periode yang dipilih
         var inPeriod = true;
@@ -2546,6 +2549,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
         if (fTahun !== '' && String(rowYear) !== fTahun) inPeriod = false;
 
         if (inPeriod) {
+          transByStore[stKey] = (transByStore[stKey] || 0) + r.nilai;
           periodeTotal += r.nilai;
           periodeTransaksi += 1;
           periodeDibayar += used;
@@ -2558,9 +2562,19 @@ function getRekapKreditPerAnggota(bulan, tahun) {
       // Biaya jasa 1,5%/bulan atas sisa tagihan yang belum lunas (snapshot s/d akhir periode)
       var feeRes = _simulasiBiayaJasaMember(noAng.toLowerCase(), piutangEvents, payRows, asOf);
 
+      // Alokasi biaya jasa per toko berdasarkan proporsi sisa belum lunas anggota
+      var sisaSutomo = sisaByStore['SUTOMO'] || 0;
+      var sisaInka = sisaByStore['INKA'] || 0;
+      var sisaAll = sisaSutomo + sisaInka;
+      var jasaSutomo = sisaAll > 0 ? Math.round(feeRes.feeTotal * sisaSutomo / sisaAll) : 0;
+      var jasaInka = feeRes.feeTotal - jasaSutomo;
+
       var status;
       if (periodeTransaksi <= 0 && feeRes.balance <= 0) status = 'Tidak Ada Transaksi';
       else status = feeRes.balance <= 0 ? 'Lunas' : 'Belum Lunas';
+
+      var transSutomo = transByStore['SUTOMO'] || 0;
+      var transInka = transByStore['INKA'] || 0;
 
       var info = userMap[noAng] || { nama: '-', kelompok: '-', hp: '', email: '', statusAnggota: '' };
       aggMap[noAng] = {
@@ -2575,6 +2589,11 @@ function getRekapKreditPerAnggota(bulan, tahun) {
         sisaPiutang: feeRes.principal,
         biayaJasa: feeRes.feeTotal,
         sisa: feeRes.balance,
+        transSutomo: transSutomo,
+        jasaSutomo: jasaSutomo,
+        transInka: transInka,
+        jasaInka: jasaInka,
+        total: transSutomo + transInka,
         status: status
       };
     }

@@ -2892,19 +2892,15 @@
                     <h4>Total Tagihan Tertunda <span style="font-weight:400;">(termasuk biaya jasa)</span></h4>
                     <div class="angka" id="stat-kredit-toko-total">Rp 0</div>
                 </div>
-                <div class="admin-card ac-blue">
-                    <h4>Biaya Jasa (1,5%/bln)</h4>
-                    <div class="angka" id="stat-kredit-toko-jasa">Rp 0</div>
-                </div>
                 <div class="admin-card ac-green">
-                    <h4>Total Nota TKST</h4>
-                    <div class="angka" id="stat-kredit-toko-nilai-tkst">Rp 0</div>
-                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Biaya Jasa TKST: <b id="stat-kredit-toko-jasa-tkst">Rp 0</b></div>
+                    <h4>Transaksi Toko Sutomo</h4>
+                    <div class="angka" id="stat-kredit-toko-trans-sutomo">Rp 0</div>
+                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko Sutomo: <b id="stat-kredit-toko-jasa-sutomo">Rp 0</b></div>
                 </div>
-                <div class="admin-card ac-red">
-                    <h4>Total Nota Lainnya</h4>
-                    <div class="angka" id="stat-kredit-toko-nilai-lain">Rp 0</div>
-                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Biaya Jasa Lainnya: <b id="stat-kredit-toko-jasa-lain">Rp 0</b></div>
+                <div class="admin-card ac-blue">
+                    <h4>Transaksi Toko INKA</h4>
+                    <div class="angka" id="stat-kredit-toko-trans-inka">Rp 0</div>
+                    <div style="font-size:11px; opacity:.8; margin-top:3px;">Jasa Toko INKA: <b id="stat-kredit-toko-jasa-inka">Rp 0</b></div>
                 </div>
             </div>
 
@@ -2957,24 +2953,18 @@
                     <thead>
                         <tr>
                             <th>Waktu</th>
-                            <th>No. Anggota</th>
+                            <th>No Anggota</th>
                             <th>Nama Pelanggan</th>
                             <th>Nota</th>
-                            <th>Kode/ID</th>
-                            <th>Nilai TKST</th>
-                            <th>Nilai Lainnya</th>
-                            <th>Dibayar</th>
-                            <th>Sisa TKST</th>
-                            <th>Sisa Lainnya</th>
-                            <th>Limit</th>
-                            <th>Sisa Limit</th>
+                            <th>Kode Transaksi</th>
+                            <th>Nominal</th>
                             <th>Notifikasi</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="14" style="text-align:center;">Memuat data...</td>
+                            <td colspan="8" style="text-align:center;">Memuat data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -3044,11 +3034,11 @@
                             <th>No Anggota</th>
                             <th>Nama</th>
                             <th>Kelompok</th>
-                            <th style="text-align:center;">Jml Transaksi</th>
-                            <th class="text-right">Total Nilai</th>
-                            <th class="text-right">Total Dibayar</th>
-                            <th class="text-right">Biaya Jasa</th>
-                            <th class="text-right">Sisa Total</th>
+                            <th class="text-right">Transaksi Toko Sutomo</th>
+                            <th class="text-right">Jasa Toko Sutomo</th>
+                            <th class="text-right">Transaksi Toko INKA</th>
+                            <th class="text-right">Jasa Toko INKA</th>
+                            <th class="text-right">Total</th>
                             <th style="text-align:center;">Status</th>
                             <th style="text-align:center;">Aksi</th>
                         </tr>
@@ -4662,7 +4652,10 @@
         function showLoadingFilterKreditTokoAdmin() {
             showSkeletonKreditTokoAdmin();
             safeSetText('stat-kredit-toko-total', 'Memproses...');
-            safeSetText('stat-kredit-toko-jasa', '...');
+            safeSetText('stat-kredit-toko-trans-sutomo', '...');
+            safeSetText('stat-kredit-toko-jasa-sutomo', '...');
+            safeSetText('stat-kredit-toko-trans-inka', '...');
+            safeSetText('stat-kredit-toko-jasa-inka', '...');
         }
 
         var rawMultiData = [];
@@ -8105,7 +8098,10 @@
             }
             showSkeletonKreditTokoAdmin();
             safeSetText('stat-kredit-toko-total', 'Memproses...');
-            safeSetText('stat-kredit-toko-jasa', '...');
+            safeSetText('stat-kredit-toko-trans-sutomo', '...');
+            safeSetText('stat-kredit-toko-jasa-sutomo', '...');
+            safeSetText('stat-kredit-toko-trans-inka', '...');
+            safeSetText('stat-kredit-toko-jasa-inka', '...');
             loadRekapHutangAdmin(true);
         }
 
@@ -8125,7 +8121,7 @@
             if (tb && !silent) {
                 var skel = '';
                 for (var si = 0; si < 5; si++) {
-                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
                 }
                 tb.innerHTML = skel;
                 showLoading("Memuat Data Kredit Toko...");
@@ -8155,11 +8151,7 @@
                         rawDataHutangAdmin.forEach(function (h) {
                             h.memberLimit = Number(h.memberLimit) || 0; // Ensure it's a number
                             h.remainingLimit = h.memberLimit - (Number(h.nilai) || 0);
-                            h.nilaiTkst = Number(h.nilaiTkst) || 0;
-                            h.nilaiLain = Number(h.nilaiLain) || 0;
-                            h.sisaTkst = Number(h.sisaTkst) || 0;
-                            h.sisaLain = Number(h.sisaLain) || 0;
-                            h.kategori = h.kategori || _kategoriNotaClient(h.nota);
+                            h.store = h.store || _storeFromNotaClient(h.nota);
                         });
                         rawDataHutangAdmin.sort(function (a, b) { return (b.waktuRaw || 0) - (a.waktuRaw || 0); });
                         rawHutangPeriodKey = currentPeriodKeyKreditToko();
@@ -8435,19 +8427,20 @@
                 });
 
                 var total = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.sisa) || 0); }, 0);
-                var totNilaiTkst = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.nilaiTkst) || 0); }, 0);
-                var totNilaiLain = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.nilaiLain) || 0); }, 0);
-                var totSisaTkst = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.sisaTkst) || 0); }, 0);
-                var totSisaLain = filteredHutangAdmin.reduce(function (sum, h) { return sum + (Number(h.sisaLain) || 0); }, 0);
-                var totPembagi = totSisaTkst + totSisaLain;
-                var jasaTkst = totPembagi > 0 ? Math.round(rawHutangAdminJasa * totSisaTkst / totPembagi) : 0;
-                var jasaLain = rawHutangAdminJasa - jasaTkst;
+                var totTransSutomo = 0, totTransInka = 0, totSisaSutomo = 0, totSisaInka = 0;
+                filteredHutangAdmin.forEach(function (h) {
+                    var isSutomo = h.store === 'SUTOMO';
+                    if (isSutomo) { totTransSutomo += Number(h.nilai) || 0; totSisaSutomo += Number(h.sisa) || 0; }
+                    else { totTransInka += Number(h.nilai) || 0; totSisaInka += Number(h.sisa) || 0; }
+                });
+                var totSisa = totSisaSutomo + totSisaInka;
+                var jasaSutomo = totSisa > 0 ? Math.round(rawHutangAdminJasa * totSisaSutomo / totSisa) : 0;
+                var jasaInka = rawHutangAdminJasa - jasaSutomo;
                 safeSetText('stat-kredit-toko-total', 'Rp ' + (total + rawHutangAdminJasa).toLocaleString('id-ID'));
-                safeSetText('stat-kredit-toko-jasa', 'Rp ' + rawHutangAdminJasa.toLocaleString('id-ID'));
-                safeSetText('stat-kredit-toko-nilai-tkst', 'Rp ' + totNilaiTkst.toLocaleString('id-ID'));
-                safeSetText('stat-kredit-toko-nilai-lain', 'Rp ' + totNilaiLain.toLocaleString('id-ID'));
-                safeSetText('stat-kredit-toko-jasa-tkst', 'Rp ' + jasaTkst.toLocaleString('id-ID'));
-                safeSetText('stat-kredit-toko-jasa-lain', 'Rp ' + jasaLain.toLocaleString('id-ID'));
+                safeSetText('stat-kredit-toko-trans-sutomo', 'Rp ' + totTransSutomo.toLocaleString('id-ID'));
+                safeSetText('stat-kredit-toko-jasa-sutomo', 'Rp ' + jasaSutomo.toLocaleString('id-ID'));
+                safeSetText('stat-kredit-toko-trans-inka', 'Rp ' + totTransInka.toLocaleString('id-ID'));
+                safeSetText('stat-kredit-toko-jasa-inka', 'Rp ' + jasaInka.toLocaleString('id-ID'));
                 kreditTokoAdminPage = 1; renderTableKreditTokoAdmin();
                 updateKreditTokoChart();
             }, 120);
@@ -8472,8 +8465,8 @@
             }, 100);
         }
 
-        function _kategoriNotaClient(nota) {
-            return String(nota || '').replace(/^'/, '').trim().toUpperCase().indexOf('TKST') === 0 ? 'TKST' : 'Lainnya';
+        function _storeFromNotaClient(nota) {
+            return String(nota || '').replace(/^'/, '').trim().toUpperCase().indexOf('TKST') === 0 ? 'SUTOMO' : 'INKA';
         }
 
         function renderTableKreditTokoAdmin() {
@@ -8488,11 +8481,8 @@
             var start = (kreditTokoAdminPage - 1) * limit;
             var pagData = filteredHutangAdmin.slice(start, start + limit);
 
-            if (pagData.length === 0) { tb.innerHTML = '<tr><td colspan="14" style="text-align:center; padding:20px;">Data Kosong.</td></tr>'; }
+            if (pagData.length === 0) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Data Kosong.</td></tr>'; }
             else {
-                function fmtTkstLain(v) {
-                    return (Number(v) || 0) > 0 ? '<b style="color:#e74c3c;">Rp ' + (Number(v) || 0).toLocaleString('id-ID') + '</b>' : '<span style="color:#ccc;">-</span>';
-                }
                 pagData.forEach(function (h, i) {
                     var globalIdx = start + i;
                     var adaWa = h.noHp && h.noHp.trim() !== '';
@@ -8514,13 +8504,7 @@
                         '<td><b>' + h.nama + '</b></td>' +
                         '<td>' + (h.nota || '-') + '</td>' +
                         '<td style="font-family:monospace; font-size:11px;">' + (h.kodeVoucher || h.id || '-') + '</td>' +
-                        '<td>' + fmtTkstLain(h.nilaiTkst) + '</td>' +
-                        '<td>' + fmtTkstLain(h.nilaiLain) + '</td>' +
-                        '<td style="color:#27ae60;">Rp ' + (Number(h.dibayar) || 0).toLocaleString('id-ID') + '</td>' +
-                        '<td>' + fmtTkstLain(h.sisaTkst) + '</td>' +
-                        '<td>' + fmtTkstLain(h.sisaLain) + '</td>' +
-                        '<td>' + (Number(h.memberLimit) < 0 ? 'Tanpa Batas' : 'Rp ' + (Number(h.memberLimit) || 0).toLocaleString('id-ID')) + '</td>' +
-                        '<td>' + (h.remainingLimit !== undefined ? (Number(h.remainingLimit) < 0 ? 'Tanpa Batas' : 'Rp ' + Number(h.remainingLimit).toLocaleString('id-ID')) : '-') + '</td>' +
+                        '<td style="color:#e74c3c; font-weight:700;">Rp ' + (Number(h.nilai) || 0).toLocaleString('id-ID') + '</td>' +
                         '<td style="text-align:center;">' + notifBadge + '</td>' +
                         '<td style="white-space:nowrap;">' + pesanBtn + ' ' + detailBtn + ' ' + notifTgl + '</td>' +
                         '</tr>';
@@ -8664,25 +8648,28 @@
         }
         function exportHutangExcel() {
             if (filteredHutangAdmin.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
-            var d = [["Waktu", "No Anggota", "Nama", "Nota", "Kode/ID", "Kategori", "Nilai TKST", "Nilai Lainnya", "Dibayar", "Sisa TKST", "Sisa Lainnya", "Status"]];
-            filteredHutangAdmin.forEach(function (h) { d.push([h.waktu, h.noAnggota, h.nama, h.nota || '-', h.kodeVoucher || h.id, h.kategori || '-', Number(h.nilaiTkst) || 0, Number(h.nilaiLain) || 0, Number(h.dibayar) || 0, Number(h.sisaTkst) || 0, Number(h.sisaLain) || 0, h.status]); });
-            var totNilaiTkst = 0, totNilaiLain = 0, totBayar = 0, totSisaTkst = 0, totSisaLain = 0;
+            var d = [["Waktu", "No Anggota", "Nama", "Nota", "Kode Transaksi", "Nominal", "Status"]];
+            filteredHutangAdmin.forEach(function (h) { d.push([h.waktu, h.noAnggota, h.nama, h.nota || '-', h.kodeVoucher || h.id, Number(h.nilai) || 0, h.status]); });
+            var totNominal = 0, totBayar = 0, totSisa = 0, totTransSutomo = 0, totTransInka = 0, totSisaSutomo = 0, totSisaInka = 0;
             filteredHutangAdmin.forEach(function (h) {
-                totNilaiTkst += Number(h.nilaiTkst) || 0;
-                totNilaiLain += Number(h.nilaiLain) || 0;
+                totNominal += Number(h.nilai) || 0;
                 totBayar += Number(h.dibayar) || 0;
-                totSisaTkst += Number(h.sisaTkst) || 0;
-                totSisaLain += Number(h.sisaLain) || 0;
+                totSisa += Number(h.sisa) || 0;
+                if (h.store === 'SUTOMO') { totTransSutomo += Number(h.nilai) || 0; totSisaSutomo += Number(h.sisa) || 0; }
+                else { totTransInka += Number(h.nilai) || 0; totSisaInka += Number(h.sisa) || 0; }
             });
-            var totSisa = totSisaTkst + totSisaLain;
-            var totPembagi = totSisa;
-            var jasaTkst = totPembagi > 0 ? Math.round(rawHutangAdminJasa * totSisaTkst / totPembagi) : 0;
-            var jasaLain = rawHutangAdminJasa - jasaTkst;
+            var totSisaAll = totSisaSutomo + totSisaInka;
+            var jasaSutomo = totSisaAll > 0 ? Math.round(rawHutangAdminJasa * totSisaSutomo / totSisaAll) : 0;
+            var jasaInka = rawHutangAdminJasa - jasaSutomo;
             d.push([]);
-            d.push(['', '', 'TOTAL', '', '', '', totNilaiTkst, totNilaiLain, totBayar, totSisaTkst, totSisaLain, '']);
+            d.push(['', 'TOTAL', '', '', '', totNominal]);
+            d.push([]);
+            d.push(['Transaksi Toko Sutomo', '', '', '', '', totTransSutomo, '']);
+            d.push(['Jasa Toko Sutomo (1,5%/bln)', '', '', '', '', jasaSutomo, '']);
+            d.push(['Transaksi Toko INKA', '', '', '', '', totTransInka, '']);
+            d.push(['Jasa Toko INKA (1,5%/bln)', '', '', '', '', jasaInka, '']);
             d.push([]);
             d.push(['Catatan: Total tagihan tertunda = ' + (totSisa + rawHutangAdminJasa).toLocaleString('id-ID') + ' (termasuk biaya jasa 1,5%/bln sebesar ' + rawHutangAdminJasa.toLocaleString('id-ID') + ').']);
-            d.push(['Rincian biaya jasa (1,5%/bln): TKST = ' + jasaTkst.toLocaleString('id-ID') + ', Lainnya = ' + jasaLain.toLocaleString('id-ID') + ', Total = ' + rawHutangAdminJasa.toLocaleString('id-ID') + '.']);
             var ws = XLSX.utils.aoa_to_sheet(d); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap_Kredit"); XLSX.writeFile(wb, "Rekap_Kredit_Toko.xlsx");
         }
 
@@ -8735,7 +8722,7 @@
             if (tb) {
                 var skel = '';
                 for (var si = 0; si < 5; si++) {
-                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
                 }
                 tb.innerHTML = skel;
             }
@@ -8816,14 +8803,14 @@
                         '<td><b>' + (a.noAnggota || '-') + '</b></td>' +
                         '<td>' + (a.nama || '-') + '</td>' +
                         '<td>' + (a.kelompok || '-') + '</td>' +
-                        '<td class="text-center">' + (a.jumlahTransaksi || 0) + '</td>' +
-                        '<td class="text-right"><b>Rp ' + (Number(a.totalNilai) || 0).toLocaleString('id-ID') + '</b></td>' +
-                        '<td class="text-right" style="color:#27ae60;"><b>Rp ' + (Number(a.totalDibayar) || 0).toLocaleString('id-ID') + '</b></td>' +
-                        '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.biayaJasa) || 0).toLocaleString('id-ID') + '</b></td>' +
-                        '<td class="text-right" style="color:' + (Number(a.sisa) > 0 ? '#e74c3c' : '#27ae60') + ';"><b>Rp ' + (Number(a.sisa) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><b>Rp ' + (Number(a.transSutomo) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.jasaSutomo) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><b>Rp ' + (Number(a.transInka) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.jasaInka) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><span style="display:inline-block; min-width:65px; color:#2c3e50; font-weight:800;">Rp ' + (Number(a.total) || 0).toLocaleString('id-ID') + '</span></td>' +
                         '<td class="text-center"><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:' + stsColor + '; background:' + stsBg + ';">' + (a.status || '-') + '</span></td>' +
-                        ((Number(a.totalNilai) || 0) > 0
-                            ? '<td class="text-center"><button class="btn-icon-sm" title="Kirim WA" onclick="kirimWaPerAnggota(\'' + (a.noAnggota || '') + '\', \'' + (a.nama || '').replace(/'/g, "\\'") + '\', \'' + (a.noHp || '') + '\', ' + (Number(a.totalNilai) || 0) + ', ' + (a.jumlahTransaksi || 0) + ')"><i class="bi bi-whatsapp"></i></button></td>'
+                        ((Number(a.total) || 0) > 0
+                            ? '<td class="text-center"><button class="btn-icon-sm" title="Kirim WA" onclick="kirimWaPerAnggota(\'' + (a.noAnggota || '') + '\', \'' + (a.nama || '').replace(/'/g, "\\'") + '\', \'' + (a.noHp || '') + '\', ' + (Number(a.total) || 0) + ', ' + (a.jumlahTransaksi || 0) + ')"><i class="bi bi-whatsapp"></i></button></td>'
                             : '<td class="text-center">-</td>') +
                         '</tr>';
                 });
@@ -8857,7 +8844,7 @@
             d.push(['REKAP KREDIT TOKO PER ANGGOTA']);
             d.push([judulPeriode]);
             d.push([]);
-            d.push(["No", "No Anggota", "Nama", "Kelompok", "Jumlah Transaksi", "Total Nilai", "Total Dibayar", "Biaya Jasa", "Sisa Total", "Status"]);
+            d.push(["No", "No Anggota", "Nama", "Kelompok", "Transaksi Toko Sutomo", "Jasa Toko Sutomo", "Transaksi Toko INKA", "Jasa Toko INKA", "Total", "Status"]);
 
             filteredRekapAnggota.forEach(function (a, idx) {
                 d.push([
@@ -8865,33 +8852,31 @@
                     a.noAnggota || '-',
                     a.nama || '-',
                     a.kelompok || '-',
-                    a.jumlahTransaksi || 0,
-                    Number(a.totalNilai) || 0,
-                    Number(a.totalDibayar) || 0,
-                    Number(a.biayaJasa) || 0,
-                    Number(a.sisa) || 0,
+                    Number(a.transSutomo) || 0,
+                    Number(a.jasaSutomo) || 0,
+                    Number(a.transInka) || 0,
+                    Number(a.jasaInka) || 0,
+                    Number(a.total) || 0,
                     a.status || '-'
                 ]);
             });
 
-            // Add summary row
-            var totalNilai = 0, totalDibayar = 0, totalSisa = 0, totalTransaksi = 0, totalJasa = 0;
-            filteredRekapAnggota.forEach(function (a) {
-                totalNilai += Number(a.totalNilai) || 0;
-                totalDibayar += Number(a.totalDibayar) || 0;
-                totalSisa += Number(a.sisa) || 0;
-                totalJasa += Number(a.biayaJasa) || 0;
-                totalTransaksi += a.jumlahTransaksi || 0;
-            });
             d.push([]);
-            d.push(['', '', 'TOTAL', '', totalTransaksi, totalNilai, totalDibayar, totalJasa, totalSisa, '']);
+            var tJasaSutomo = 0, tJasaInka = 0, tTransSutomo = 0, tTransInka = 0;
+            filteredRekapAnggota.forEach(function (a) {
+                tTransSutomo += Number(a.transSutomo) || 0;
+                tJasaSutomo += Number(a.jasaSutomo) || 0;
+                tTransInka += Number(a.transInka) || 0;
+                tJasaInka += Number(a.jasaInka) || 0;
+            });
+            d.push(['', '', 'TOTAL', '', tTransSutomo, tJasaSutomo, tTransInka, tJasaInka, tTransSutomo + tTransInka, '']);
 
             var ws = XLSX.utils.aoa_to_sheet(d);
 
             // Set column widths
             ws['!cols'] = [
                 { wch: 5 }, { wch: 14 }, { wch: 22 }, { wch: 14 },
-                { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 14 }
+                { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 16 }
             ];
 
             var wb = XLSX.utils.book_new();
