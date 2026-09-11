@@ -2586,7 +2586,7 @@ function getRekapKreditPerAnggota(bulan, tahun) {
         jasaSutomo: jasaSutomo,
         transInka: transInka,
         jasaInka: jasaInka,
-        total: transSutomo + transInka,
+        total: transSutomo + jasaSutomo + transInka + jasaInka,
         status: status
       };
     }

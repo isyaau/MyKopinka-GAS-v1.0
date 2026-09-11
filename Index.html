@@ -8869,7 +8869,7 @@
                 tTransInka += Number(a.transInka) || 0;
                 tJasaInka += Number(a.jasaInka) || 0;
             });
-            d.push(['', '', 'TOTAL', '', tTransSutomo, tJasaSutomo, tTransInka, tJasaInka, tTransSutomo + tTransInka, '']);
+            d.push(['', '', 'TOTAL', '', tTransSutomo, tJasaSutomo, tTransInka, tJasaInka, tTransSutomo + tJasaSutomo + tTransInka + tJasaInka, '']);
 
             var ws = XLSX.utils.aoa_to_sheet(d);
 
