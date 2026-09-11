@@ -2210,7 +2210,7 @@ function getKreditTokoForMember(noAnggota) {
         var tglObj = _parseDate(tglRaw);
         var tglStr = tglObj ? Utilities.formatDate(tglObj, tz, "dd/MM/yyyy HH:mm") : String(tglRaw);
 
-        items.push({ rowIdx: i+1, waktu: tglStr, id: idSys, nota: String(data[i][2]), toko: String(data[i][3]), petugas: String(data[i][4]), nilai: nilai, dibayar: used, sisa: sisa, noAnggota: String(data[i][6]), verifikasiFileId: fileId });
+        items.push({ rowIdx: i+1, waktu: tglStr, waktuRaw: tglObj ? tglObj.getTime() : 0, id: idSys, nota: String(data[i][2]), toko: String(data[i][3]), petugas: String(data[i][4]), nilai: nilai, dibayar: used, sisa: sisa, noAnggota: String(data[i][6]), verifikasiFileId: fileId });
         total += sisa;
       }
     }

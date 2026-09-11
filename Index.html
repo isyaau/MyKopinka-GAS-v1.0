@@ -6293,6 +6293,7 @@
                     hideLoading();
                     if (res && res.status === 'sukses') {
                         myKreditTokoData = res.items || [];
+                        myKreditTokoData.sort(function (a, b) { return (b.waktuRaw || 0) - (a.waktuRaw || 0); });
                         myKreditTokoSummary = { global: Number(res.limitGlobal) || 0, outstanding: Number(res.outstanding) || 0, effective: Number(res.limitBulanIni) || 0, terpakai: Number(res.totalOutstanding) || 0, biayaJasa: Number(res.biayaJasa) || 0 };
                         var d = new Date();
                         safeSetValue('filter-kt-bulan', String(d.getMonth() + 1).padStart(2, '0'));
@@ -9493,6 +9494,7 @@ var skel = '';
                     return Swal.fire('Error', 'Gagal memuat data rekap kredit.', 'error');
                 }
                 kasirRekapData = res.data;
+                kasirRekapData.sort(function (a, b) { return (b.waktuRaw || 0) - (a.waktuRaw || 0); });
                 kasirRekapJasa = Number(res.totalBiayaJasa) || 0;
                 kasirRekapFiltered = kasirRekapData;
                 kasirRekapPage = 1;
