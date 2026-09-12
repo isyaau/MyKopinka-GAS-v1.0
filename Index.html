@@ -1972,10 +1972,12 @@
             <button class="nav-btn hidden" id="tab-admin-potongan" onclick="switchTab('admin-potongan')"><i
                     class="bi bi-cash-stack"></i> Data Potongan</button>
             <button class="nav-btn hidden" id="tab-admin-rekap-kredit-toko"
-                onclick="switchTab('admin-rekap-kredit-toko')"><i class="bi bi-book-fill"></i> Rekap Kredit
+                onclick="switchTab('admin-rekap-kredit-toko')"><i class="bi bi-book-fill"></i> Data Kredit
                 Toko</button>
             <button class="nav-btn hidden" id="tab-admin-rekap-pembayaran"
-                onclick="switchTab('admin-rekap-pembayaran')"><i class="bi bi-wallet2"></i> Rekap Pembayaran</button>
+                onclick="switchTab('admin-rekap-pembayaran')"><i class="bi bi-wallet2"></i> Data Pembayaran</button>
+            <button class="nav-btn hidden" id="tab-admin-rekap-pembayaran-all"
+                onclick="switchTab('admin-rekap-pembayaran-all')"><i class="bi bi-cash-coin"></i> Rekap Pembayaran</button>
             <button class="nav-btn hidden" id="tab-admin-toko" onclick="switchTab('admin-toko')"><i
                     class="bi bi-shop-window"></i> Kelola WA Toko</button>
             <button class="nav-btn hidden" id="tab-kelola-akun" onclick="switchTab('kelola-akun')"><i
@@ -3192,6 +3194,209 @@
                 <span id="page-info-pembayaran" class="page-info">Hal 1 / 1</span>
                 <button id="btn-next-pembayaran" class="btn-page" onclick="changePageRekapPembayaran(1)">Next
                     ▶</button>
+            </div>
+        </div>
+
+        <div id="view-admin-rekap-pembayaran-all" class="hidden">
+            <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #e67e22; padding-bottom:10px;"><i
+                    class="bi bi-cash-coin" style="color:#e67e22;"></i> Rekap Pembayaran</h3>
+            <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Rekap tagihan & pembayaran seluruh anggota koperasi.</p>
+
+            <div class="sub-nav">
+                <button class="sub-btn active" id="sub-tab-tagihan-all" onclick="switchSubTabRekapPembayaranAll('tagihan')"><i
+                        class="bi bi-clipboard-data"></i> Rekap Tagihan</button>
+                <button class="sub-btn" id="sub-tab-bayar-all" onclick="switchSubTabRekapPembayaranAll('bayar')"><i
+                        class="bi bi-cash-coin"></i> Rekap Pembayaran</button>
+            </div>
+
+            <!-- ============================== -->
+            <!-- SUB-TAB: REKAP TAGIHAN          -->
+            <!-- ============================== -->
+            <div id="sub-tagihan-all">
+
+                <div class="filter-container">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%;">
+                        <div style="flex:1; min-width:200px;">
+                            <label>Bulan & Tahun:</label>
+                            <div style="display:flex; gap:5px;">
+                                <select id="filter-tagihan-all-bulan" onchange="loadRekapTagihanAll()">
+                                    <option value="ALL">Semua Bulan</option>
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                                <input type="number" id="filter-tagihan-all-tahun" placeholder="Tahun"
+                                    style="width:80px;" onchange="loadRekapTagihanAll()">
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:150px;">
+                            <label>Cari Nama/No/Kelompok:</label>
+                            <input type="text" id="search-tagihan-all" placeholder="🔍 Cari..."
+                                oninput="applyFilterRekapTagihanAll()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-card-container">
+                    <div class="admin-card">
+                        <h4>Jumlah Anggota</h4>
+                        <div class="angka" id="stat-tagihan-all-jml">0</div>
+                    </div>
+                    <div class="admin-card ac-red">
+                        <h4>Total Tagihan</h4>
+                        <div class="angka" id="stat-tagihan-all-total">Rp 0</div>
+                    </div>
+                    <div class="admin-card ac-green">
+                        <h4>Total Bayar</h4>
+                        <div class="angka" id="stat-tagihan-all-bayar">Rp 0</div>
+                    </div>
+                    <div class="admin-card">
+                        <h4>Sisa Tagihan</h4>
+                        <div class="angka" id="stat-tagihan-all-sisa">Rp 0</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <button style="background:#17a2b8; width:auto; padding:8px 15px;" onclick="loadRekapTagihanAll()"><i
+                            class="bi bi-arrow-clockwise"></i> Refresh</button>
+                    <button style="background:#27ae60; width:auto; padding:8px 15px;"
+                        onclick="exportRekapTagihanAllExcel()"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="tabel-tagihan-all" class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:center;">No</th>
+                                <th>No Anggota</th>
+                                <th>Nama</th>
+                                <th>Kelompok</th>
+                                <th class="text-right">Jml Transaksi</th>
+                                <th class="text-right">Total Tagihan</th>
+                                <th class="text-right">Total Bayar</th>
+                                <th class="text-right">Sisa Tagihan</th>
+                                <th style="text-align:center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="9" style="text-align:center;">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:15px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <label style="font-size:11px; font-weight:700; color:#7f8c8d;">Tampilkan:</label>
+                        <select id="limit-tagihan-all" class="filter-select" onchange="changeLimitRekapTagihanAll()" style="width:auto; font-size:12px; padding:6px 10px;">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="pagination-wrapper" style="margin-top:0;">
+                        <button id="btn-prev-tagihan-all" class="btn-page" onclick="changePageRekapTagihanAll(-1)">◀ Prev</button>
+                        <span id="page-info-tagihan-all" class="page-info">Hal 1 / 1</span>
+                        <button id="btn-next-tagihan-all" class="btn-page" onclick="changePageRekapTagihanAll(1)">Next ▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== -->
+            <!-- SUB-TAB: REKAP PEMBAYARAN        -->
+            <!-- ============================== -->
+            <div id="sub-pembayaran-all" class="hidden">
+
+                <div class="filter-container">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%;">
+                        <div style="flex:1; min-width:200px;">
+                            <label>Bulan & Tahun:</label>
+                            <div style="display:flex; gap:5px;">
+                                <select id="filter-pembayaran-all-bulan" onchange="applyFilterRekapPembayaranAll()">
+                                    <option value="ALL">Semua Bulan</option>
+                                    <option value="1">Januari</option>
+                                    <option value="2">Februari</option>
+                                    <option value="3">Maret</option>
+                                    <option value="4">April</option>
+                                    <option value="5">Mei</option>
+                                    <option value="6">Juni</option>
+                                    <option value="7">Juli</option>
+                                    <option value="8">Agustus</option>
+                                    <option value="9">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                                <input type="number" id="filter-pembayaran-all-tahun" placeholder="Tahun"
+                                    style="width:80px;" onchange="applyFilterRekapPembayaranAll()">
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:150px;">
+                            <label>Cari Nama/No/Nota:</label>
+                            <input type="text" id="search-pembayaran-all" placeholder="🔍 Cari..."
+                                oninput="applyFilterRekapPembayaranAll()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-card-container">
+                    <div class="admin-card ac-green">
+                        <h4>Total Pembayaran</h4>
+                        <div class="angka" id="stat-pembayaran-all-total">Rp 0</div>
+                    </div>
+                    <div class="admin-card">
+                        <h4>Jumlah Transaksi</h4>
+                        <div class="angka" id="stat-pembayaran-all-count">0</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <button style="background:#17a2b8; width:auto; padding:8px 15px;"
+                        onclick="loadRekapPembayaranAll()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                    <button style="background:#27ae60; width:auto; padding:8px 15px;"
+                        onclick="exportRekapPembayaranAllExcel()"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="tabel-pembayaran-all" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>No. Anggota</th>
+                                <th>Nama Pelanggan</th>
+                                <th>Kelompok</th>
+                                <th>Total Piutang</th>
+                                <th>Jumlah Bayar</th>
+                                <th>Nota Pembayaran</th>
+                                <th>Metode</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="10" style="text-align:center;">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-wrapper">
+                    <button id="btn-prev-pembayaran-all" class="btn-page" onclick="changePageRekapPembayaranAll(-1)">◀
+                        Prev</button>
+                    <span id="page-info-pembayaran-all" class="page-info">Hal 1 / 1</span>
+                    <button id="btn-next-pembayaran-all" class="btn-page" onclick="changePageRekapPembayaranAll(1)">Next
+                        ▶</button>
+                </div>
             </div>
         </div>
 
@@ -4962,6 +5167,14 @@
                 safeSetValue('filter-pembayaran-end', '');
                 loadRekapPembayaran();
             }
+            else if (tab === 'admin-rekap-pembayaran-all') {
+                var d = new Date();
+                safeSetValue('filter-tagihan-all-bulan', d.getMonth() + 1);
+                safeSetValue('filter-tagihan-all-tahun', d.getFullYear());
+                safeSetValue('filter-pembayaran-all-bulan', d.getMonth() + 1);
+                safeSetValue('filter-pembayaran-all-tahun', d.getFullYear());
+                switchSubTabRekapPembayaranAll('tagihan');
+            }
             else if (tab === 'admin-settings') { loadGlobalLimit(); loadWaSettings().then(fillWaInputs); }
             else if (tab === 'admin-notif') { loadAdminNotifikasi(); }
             else if (tab === 'notifikasi') { renderUserNotifikasi(); }
@@ -5342,7 +5555,7 @@
             document.getElementById('tab-notifikasi').classList.remove('hidden');
 
             if (res.role === 'Admin') {
-                ['tab-admin', 'tab-admin-unit', 'tab-admin-potongan', 'tab-admin-rekap-kredit-toko', 'tab-admin-rekap-pembayaran', 'tab-kelola-akun', 'tab-admin-toko', 'tab-redeem', 'tab-laporan', 'tab-admin-notif', 'tab-admin-settings'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
+                ['tab-admin', 'tab-admin-unit', 'tab-admin-potongan', 'tab-admin-rekap-kredit-toko', 'tab-admin-rekap-pembayaran', 'tab-admin-rekap-pembayaran-all', 'tab-kelola-akun', 'tab-admin-toko', 'tab-redeem', 'tab-laporan', 'tab-admin-notif', 'tab-admin-settings'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
                 document.getElementById('info-toko').innerHTML = "ADMIN PUSAT"; document.getElementById('info-role').innerHTML = "<span class='badge-role role-admin'>ADMIN</span>"; switchTab('redeem');
                 setTimeout(function () { prefetchRekapHutangAdmin(); }, 200);
             }
@@ -8398,6 +8611,283 @@
             var ws = XLSX.utils.aoa_to_sheet(aoa);
             XLSX.utils.book_append_sheet(wb, ws, 'Rekap Pembayaran');
             XLSX.writeFile(wb, 'Rekap_Pembayaran.xlsx');
+        }
+
+        // ==========================================
+        // ADMIN: REKAP PEMBAYARAN (TAGIHAN + PEMBAYARAN SEMUA ANGGOTA)
+        // ==========================================
+        var rawRekapTagihanAll = [];
+        var filteredRekapTagihanAll = [];
+        var rekapTagihanAllPage = 1;
+        var rekapTagihanAllLimit = 25;
+        var rawRekapPembayaranAll = [];
+        var filteredRekapPembayaranAll = [];
+        var rekapPembayaranAllPage = 1;
+
+        function switchSubTabRekapPembayaranAll(mode) {
+            document.getElementById('sub-tab-tagihan-all').classList.toggle('active', mode === 'tagihan');
+            document.getElementById('sub-tab-bayar-all').classList.toggle('active', mode === 'bayar');
+            document.getElementById('sub-tagihan-all').classList.toggle('hidden', mode !== 'tagihan');
+            document.getElementById('sub-pembayaran-all').classList.toggle('hidden', mode !== 'bayar');
+            if (mode === 'tagihan') {
+                loadRekapTagihanAll();
+            } else {
+                if (rawRekapPembayaranAll && rawRekapPembayaranAll.length > 0) applyFilterRekapPembayaranAll();
+                else loadRekapPembayaranAll();
+            }
+        }
+
+        function loadRekapTagihanAll() {
+            var elBln = document.getElementById('filter-tagihan-all-bulan');
+            var elThn = document.getElementById('filter-tagihan-all-tahun');
+            var bln = elBln ? elBln.value : 'ALL';
+            var thn = elThn ? elThn.value : '';
+            if (!thn || thn.trim() === '') return Swal.fire('Info', 'Mohon isi tahun terlebih dahulu.', 'info');
+
+            var tb = document.querySelector('#tabel-tagihan-all tbody');
+            if (tb) {
+                var skel = '';
+                for (var si = 0; si < 5; si++) {
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                }
+                tb.innerHTML = skel;
+            }
+            safeSetText('stat-tagihan-all-jml', '...');
+            safeSetText('stat-tagihan-all-total', '...');
+            safeSetText('stat-tagihan-all-bayar', '...');
+            safeSetText('stat-tagihan-all-sisa', '...');
+
+            google.script.run.withSuccessHandler(function (res) {
+                if (res.status === 'sukses') {
+                    rawRekapTagihanAll = res.data || [];
+                } else {
+                    Swal.fire('Error', res.msg || 'Gagal memuat data.', 'error');
+                    rawRekapTagihanAll = [];
+                }
+                applyFilterRekapTagihanAll();
+            }).withFailureHandler(function (err) {
+                Swal.fire('Error', 'Server Error: ' + err, 'error');
+                rawRekapTagihanAll = [];
+                applyFilterRekapTagihanAll();
+            }).getRekapKreditPerAnggota(bln, thn);
+        }
+
+        function applyFilterRekapTagihanAll() {
+            var q = '';
+            var elQ = document.getElementById('search-tagihan-all');
+            if (elQ) q = elQ.value.toLowerCase().trim();
+
+            filteredRekapTagihanAll = rawRekapTagihanAll.filter(function (a) {
+                if (!q) return true;
+                return (a.noAnggota && a.noAnggota.toLowerCase().indexOf(q) !== -1) ||
+                       (a.nama && a.nama.toLowerCase().indexOf(q) !== -1) ||
+                       (a.kelompok && a.kelompok.toLowerCase().indexOf(q) !== -1);
+            });
+
+            var totTagihan = 0, totBayar = 0, totSisa = 0;
+            filteredRekapTagihanAll.forEach(function (a) {
+                totTagihan += Number(a.total) || 0;
+                totBayar += Number(a.totalDibayar) || 0;
+                totSisa += Number(a.sisa) || 0;
+            });
+            safeSetText('stat-tagihan-all-jml', filteredRekapTagihanAll.length.toLocaleString('id-ID'));
+            safeSetText('stat-tagihan-all-total', 'Rp ' + totTagihan.toLocaleString('id-ID'));
+            safeSetText('stat-tagihan-all-bayar', 'Rp ' + totBayar.toLocaleString('id-ID'));
+            safeSetText('stat-tagihan-all-sisa', 'Rp ' + totSisa.toLocaleString('id-ID'));
+
+            rekapTagihanAllPage = 1;
+            renderRekapTagihanAllTable();
+        }
+
+        function renderRekapTagihanAllTable() {
+            var tb = document.querySelector('#tabel-tagihan-all tbody');
+            if (!tb) return;
+            var limitEl = document.getElementById('limit-tagihan-all');
+            if (limitEl) rekapTagihanAllLimit = parseInt(limitEl.value, 10) || 25;
+            var totalPages = Math.max(1, Math.ceil(filteredRekapTagihanAll.length / rekapTagihanAllLimit));
+            if (rekapTagihanAllPage > totalPages) rekapTagihanAllPage = totalPages;
+            var start = (rekapTagihanAllPage - 1) * rekapTagihanAllLimit;
+            var slice = filteredRekapTagihanAll.slice(start, start + rekapTagihanAllLimit);
+
+            if (slice.length === 0) {
+                tb.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#95a5a6;">Tidak ada data tagihan anggota untuk periode ini.</td></tr>';
+            } else {
+                var html = '';
+                slice.forEach(function (a, idx) {
+                    var nomor = start + idx + 1;
+                    var stsColor = '#7f8c8d', stsBg = '#f1f2f6';
+                    if (a.status === 'Lunas') { stsColor = '#27ae60'; stsBg = '#e8f8f0'; }
+                    else if (a.status === 'Tidak Ada Transaksi') { stsColor = '#7f8c8d'; stsBg = '#f1f2f6'; }
+                    else { stsColor = '#e74c3c'; stsBg = '#fdecea'; }
+                    var sisaVal = Number(a.sisa) || 0;
+                    html += '<tr>' +
+                        '<td class="text-center">' + nomor + '</td>' +
+                        '<td><b>' + (a.noAnggota || '-') + '</b></td>' +
+                        '<td>' + (a.nama || '-') + '</td>' +
+                        '<td>' + (a.kelompok || '-') + '</td>' +
+                        '<td class="text-right">' + (a.jumlahTransaksi || 0) + '</td>' +
+                        '<td class="text-right"><b>Rp ' + (Number(a.total) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:#27ae60;"><b>Rp ' + (Number(a.totalDibayar) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:' + (sisaVal > 0 ? '#e74c3c' : '#2ecc71') + ';"><b>Rp ' + sisaVal.toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-center"><span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:' + stsColor + '; background:' + stsBg + ';">' + (a.status || '-') + '</span></td>' +
+                        '</tr>';
+                });
+                tb.innerHTML = html;
+            }
+
+            safeSetText('page-info-tagihan-all', 'Hal ' + rekapTagihanAllPage + ' / ' + totalPages);
+            var bp = document.getElementById('btn-prev-tagihan-all');
+            var bn = document.getElementById('btn-next-tagihan-all');
+            if (bp) bp.disabled = (rekapTagihanAllPage <= 1);
+            if (bn) bn.disabled = (rekapTagihanAllPage >= totalPages);
+        }
+
+        function changePageRekapTagihanAll(dir) {
+            rekapTagihanAllPage += dir;
+            renderRekapTagihanAllTable();
+        }
+
+        function changeLimitRekapTagihanAll() {
+            var el = document.getElementById('limit-tagihan-all');
+            rekapTagihanAllLimit = el ? parseInt(el.value, 10) || 25 : 25;
+            rekapTagihanAllPage = 1;
+            renderRekapTagihanAllTable();
+        }
+
+        function exportRekapTagihanAllExcel() {
+            if (filteredRekapTagihanAll.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
+            var elBln = document.getElementById('filter-tagihan-all-bulan');
+            var elThn = document.getElementById('filter-tagihan-all-tahun');
+            var bln = elBln ? elBln.value : 'ALL';
+            var thn = elThn ? elThn.value : '';
+            var bulanNama = (bln !== 'ALL' && bln !== '') ? (namaBulan[parseInt(bln, 10)] || bln) : 'Semua Bulan';
+            var d = [];
+            d.push(['REKAP TAGIHAN SEMUA ANGGOTA']);
+            d.push(['Periode: ' + bulanNama + ' ' + thn]);
+            d.push([]);
+            d.push(['No', 'No Anggota', 'Nama', 'Kelompok', 'Jml Transaksi', 'Total Tagihan', 'Total Bayar', 'Sisa Tagihan', 'Status']);
+            filteredRekapTagihanAll.forEach(function (a, idx) {
+                d.push([idx + 1, a.noAnggota || '-', a.nama || '-', a.kelompok || '-', a.jumlahTransaksi || 0, Number(a.total) || 0, Number(a.totalDibayar) || 0, Number(a.sisa) || 0, a.status || '-']);
+            });
+            d.push([]);
+            var tT = 0, tB = 0, tS = 0;
+            filteredRekapTagihanAll.forEach(function (a) { tT += Number(a.total) || 0; tB += Number(a.totalDibayar) || 0; tS += Number(a.sisa) || 0; });
+            d.push(['', '', 'TOTAL', '', '', tT, tB, tS, '']);
+            var wsX = XLSX.utils.aoa_to_sheet(d);
+            wsX['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 25 }, { wch: 18 }, { wch: 13 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 16 }];
+            var wbX = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wbX, wsX, 'Rekap Tagihan');
+            XLSX.writeFile(wbX, 'Rekap_Tagihan_Anggota.xlsx');
+        }
+
+        function loadRekapPembayaranAll() {
+            var tb = document.querySelector('#tabel-pembayaran-all tbody');
+            if (tb) tb.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#95a5a6;">Memuat data...</td></tr>';
+            google.script.run.withSuccessHandler(function (res) {
+                if (res.status === 'sukses') {
+                    rawRekapPembayaranAll = res.data || [];
+                    rekapPembayaranAllPage = 1;
+                    applyFilterRekapPembayaranAll();
+                } else { Swal.fire('Error', res.msg, 'error'); }
+            }).withFailureHandler(function (err) { Swal.fire('Error', String(err), 'error'); }).getRekapPembayaran();
+        }
+
+        function applyFilterRekapPembayaranAll() {
+            var q = '';
+            var elQ = document.getElementById('search-pembayaran-all');
+            if (elQ) q = elQ.value.toLowerCase();
+            var elBln = document.getElementById('filter-pembayaran-all-bulan');
+            var elThn = document.getElementById('filter-pembayaran-all-tahun');
+            var bln = elBln ? elBln.value : 'ALL';
+            var thn = elThn ? elThn.value : '';
+
+            filteredRekapPembayaranAll = rawRekapPembayaranAll.filter(function (p) {
+                var hay = (p.nama + " " + p.noAnggota + " " + (p.notaBayar || "") + " " + (p.metode || "")).toLowerCase();
+                if (q && hay.indexOf(q) === -1) return false;
+                var d = new Date(p.waktuRaw || p.waktu);
+                if (bln !== "ALL" && (d.getMonth() + 1).toString() !== bln) return false;
+                if (thn && d.getFullYear().toString() !== thn) return false;
+                return true;
+            });
+
+            var total = filteredRekapPembayaranAll.reduce(function (s, p) { return s + (Number(p.jumlah) || 0); }, 0);
+            safeSetText('stat-pembayaran-all-total', 'Rp ' + total.toLocaleString('id-ID'));
+            safeSetText('stat-pembayaran-all-count', filteredRekapPembayaranAll.length.toLocaleString('id-ID'));
+            rekapPembayaranAllPage = 1;
+            renderRekapPembayaranAllTable();
+        }
+
+        function renderRekapPembayaranAllTable() {
+            var tb = document.querySelector('#tabel-pembayaran-all tbody');
+            if (!tb) return;
+            var limit = 10;
+            var tot = Math.ceil(filteredRekapPembayaranAll.length / limit) || 1;
+            if (rekapPembayaranAllPage > tot) rekapPembayaranAllPage = tot;
+            if (rekapPembayaranAllPage < 1) rekapPembayaranAllPage = 1;
+            var start = (rekapPembayaranAllPage - 1) * limit;
+            var pagData = filteredRekapPembayaranAll.slice(start, start + limit);
+
+            if (pagData.length === 0) {
+                tb.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#95a5a6;">Tidak ada data pembayaran untuk periode ini.</td></tr>';
+            } else {
+                var html = '';
+                pagData.forEach(function (p) {
+                    var statusBadge = (p.status === 'Lunas') ?
+                        '<span style="display:inline-flex; align-items:center; gap:5px; background:#e8f8ef; color:#1e8e3e; border:1px solid #b7e7c8; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;"><i class="bi bi-check2-circle"></i> Lunas</span>' :
+                        '<span style="display:inline-flex; align-items:center; gap:5px; background:#eef1f4; color:#5b6b79; border:1px solid #d4dae0; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;">' + (p.status || 'Masuk') + '</span>';
+                    var hpClean = String(p.noHp || '').replace(/[^0-9]/g, '');
+                    var namaAman = String(p.nama || '-').replace(/'/g, '');
+                    var waBtn = hpClean ?
+                        '<button class="btn-icon-sm" title="Chat WA" onclick="bukaWaPembayaran(\'' + hpClean + '\',\'' + namaAman + '\')"><i class="bi bi-whatsapp"></i></button>' :
+                        '<button class="btn-icon-sm btn-icon-disabled" title="Tidak ada no HP" disabled style="opacity:0.35;cursor:not-allowed;"><i class="bi bi-whatsapp"></i></button>';
+                    html += '<tr>' +
+                        '<td>' + p.waktu + '</td>' +
+                        '<td>' + p.noAnggota + '</td>' +
+                        '<td><b>' + p.nama + '</b></td>' +
+                        '<td>' + p.kelompok + '</td>' +
+                        '<td>Rp ' + (Number(p.nilaiPiutang) || 0).toLocaleString('id-ID') + '</td>' +
+                        '<td style="color:#27ae60; font-weight:700;">Rp ' + (Number(p.jumlah) || 0).toLocaleString('id-ID') + '</td>' +
+                        '<td>' + (p.notaBayar || '-') + '</td>' +
+                        '<td>' + (p.metode || '-') + '</td>' +
+                        '<td style="text-align:center;">' + statusBadge + '</td>' +
+                        '<td style="white-space:nowrap;">' + waBtn + '</td>' +
+                        '</tr>';
+                });
+                tb.innerHTML = html;
+            }
+
+            safeSetText('page-info-pembayaran-all', 'Hal ' + rekapPembayaranAllPage + ' / ' + tot);
+            var bp = document.getElementById('btn-prev-pembayaran-all');
+            var bn = document.getElementById('btn-next-pembayaran-all');
+            if (bp) bp.disabled = (rekapPembayaranAllPage === 1);
+            if (bn) bn.disabled = (rekapPembayaranAllPage === tot);
+        }
+
+        function changePageRekapPembayaranAll(dir) {
+            rekapPembayaranAllPage += dir;
+            renderRekapPembayaranAllTable();
+        }
+
+        function exportRekapPembayaranAllExcel() {
+            if (filteredRekapPembayaranAll.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
+            var elBln = document.getElementById('filter-pembayaran-all-bulan');
+            var elThn = document.getElementById('filter-pembayaran-all-tahun');
+            var bln = elBln ? elBln.value : 'ALL';
+            var thn = elThn ? elThn.value : '';
+            var bulanNama = (bln !== 'ALL' && bln !== '') ? (namaBulan[parseInt(bln, 10)] || bln) : 'Semua Bulan';
+            var d = [];
+            d.push(['REKAP PEMBAYARAN SEMUA ANGGOTA']);
+            d.push(['Periode: ' + bulanNama + ' ' + thn]);
+            d.push([]);
+            d.push(['Waktu', 'No. Anggota', 'Nama Pelanggan', 'Kelompok', 'Total Piutang', 'Jumlah Bayar', 'Nota Pembayaran', 'Metode', 'Status']);
+            filteredRekapPembayaranAll.forEach(function (p) {
+                d.push([p.waktu, p.noAnggota, p.nama, p.kelompok, Number(p.nilaiPiutang) || 0, Number(p.jumlah) || 0, p.notaBayar, p.metode, p.status]);
+            });
+            var wsX = XLSX.utils.aoa_to_sheet(d);
+            wsX['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 25 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 12 }];
+            var wbX = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wbX, wsX, 'Rekap Pembayaran');
+            XLSX.writeFile(wbX, 'Rekap_Pembayaran_Anggota.xlsx');
         }
 
         function applyFilterKreditTokoAdmin() {
