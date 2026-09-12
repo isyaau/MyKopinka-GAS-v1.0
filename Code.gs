@@ -2697,6 +2697,241 @@ function getRekapPembayaran() {
   }
 }
 
+// =====================================================
+// MONITORING LIMIT KREDIT & TAGIHAN PER BULAN (ADMIN)
+// =====================================================
+
+// Ledger kredit (+) & pembayaran (-) per anggota, dikelompokkan per bulan
+// dari bulan transaksi pertama sampai bulan berjalan. Baris bulan tanpa
+// aktivitas tetap muncul supaya akumulasi sisa tagihan antar bulan terlihat.
+function _buildLedgerMember(noAngLc, piutangEvents, payRows) {
+  var events = [];
+  for (var i = 0; i < piutangEvents.length; i++) {
+    if (piutangEvents[i].noAng === noAngLc) events.push({ t: piutangEvents[i].t, val: piutangEvents[i].val });
+  }
+  for (var j = 0; j < payRows.length; j++) {
+    if (payRows[j].noAng === noAngLc) events.push({ t: payRows[j].t, val: -payRows[j].jml });
+  }
+  if (events.length === 0) return { months: [] };
+  events.sort(function (a, b) { if (a.t !== b.t) return a.t - b.t; return a.val > 0 ? -1 : 1; });
+
+  var now = new Date();
+  var nowY = now.getFullYear(), nowM = now.getMonth();
+  var firstD = new Date(events[0].t);
+  var year = firstD.getFullYear(), month = firstD.getMonth();
+
+  var buckets = {};
+  var evIdx = 0;
+  while (year < nowY || (year === nowY && month <= nowM)) {
+    var bkey = year + '-' + month;
+    if (!buckets[bkey]) buckets[bkey] = { y: year, m: month, tagihan: 0, bayar: 0 };
+    var mEnd = new Date(year, month + 1, 1).getTime();
+    while (evIdx < events.length && events[evIdx].t < mEnd) {
+      if (events[evIdx].val > 0) buckets[bkey].tagihan += events[evIdx].val;
+      else buckets[bkey].bayar += -events[evIdx].val;
+      evIdx++;
+    }
+    month++;
+    if (month === 12) { month = 0; year++; }
+  }
+
+  var keys = Object.keys(buckets).sort();
+  var months = [];
+  var balance = 0;
+  for (var ki = 0; ki < keys.length; ki++) {
+    var b = buckets[keys[ki]];
+    var sisaAwal = balance;
+    balance += b.tagihan;
+    balance = Math.max(0, balance - b.bayar);
+    months.push({
+      y: b.y,
+      m: b.m,
+      tagihan: b.tagihan,
+      bayar: b.bayar,
+      sisaAwal: sisaAwal,
+      sisaAkhir: balance,
+      isCurrent: (b.y === nowY && b.m === nowM)
+    });
+  }
+  return { months: months };
+}
+
+// Ringkasan limit & tagihan SEMUA anggota untuk bulan berjalan.
+// outstandingLimit = sisa tagihan bulan lalu yang dibawa ke bulan ini
+// (setelah dipotong pembayaran bulan ini) -> pengurang limit bulan berjalan.
+function getRekapLimitKreditAdmin(q) {
+  try {
+    var dataPiutang = _getCachedPiutangData();
+    var dataUsers = _getCachedUsersData();
+    var piutangEvents = _buildPiutangEvents(dataPiutang);
+    var payRows = _getCachedPaymentRows();
+    var globalLimit = _getGlobalLimitCached();
+    var aktif = _isLimitKreditAktif();
+    var now = new Date();
+    var nowM = now.getMonth(), nowY = now.getFullYear();
+
+    var userMap = {};
+    var blockedMap = {};
+    for (var j = 1; j < dataUsers.length; j++) {
+      var roleUser = String(dataUsers[j][3] || 'Anggota').trim();
+      if (roleUser.toLowerCase() !== 'anggota') continue;
+      var ukey = String(dataUsers[j][0]).trim().toLowerCase();
+      if (!ukey) continue;
+      var blRaw = String(dataUsers[j][23] || '').trim().toLowerCase();
+      blockedMap[ukey] = (blRaw === 'y' || blRaw === 'yes' || blRaw === '1' || blRaw === 'blokir');
+      userMap[ukey] = {
+        noAnggota: String(dataUsers[j][0]).trim(),
+        nama: String(dataUsers[j][2] || '-'),
+        kelompok: String(dataUsers[j][4] || '-'),
+        hp: String(dataUsers[j][10] || ''),
+        blokir: blockedMap[ukey]
+      };
+    }
+    // Anggota yang punya piutang tapi tidak terdaftar di sheet Users (data yatim piatu)
+    var seenOrphan = {};
+    for (var k = 0; k < piutangEvents.length; k++) {
+      var eKey = piutangEvents[k].noAng;
+      if (!seenOrphan[eKey] && !userMap[eKey]) {
+        seenOrphan[eKey] = true;
+        userMap[eKey] = { noAnggota: piutangEvents[k].noAng, nama: '-', kelompok: '-', hp: '', blokir: false };
+      }
+    }
+
+    var result = [];
+    for (var uk in userMap) {
+      if (!userMap.hasOwnProperty(uk)) continue;
+      var m = userMap[uk];
+      var led = _buildLedgerMember(uk, piutangEvents, payRows);
+      var cur = null;
+      for (var mi = 0; mi < led.months.length; mi++) {
+        if (led.months[mi].isCurrent) { cur = led.months[mi]; break; }
+      }
+      var tagihanBulanIni = 0, bayarBulanIni = 0, sisaBulanLalu = 0, sisaTotal = 0;
+      if (cur) {
+        tagihanBulanIni = cur.tagihan;
+        bayarBulanIni = cur.bayar;
+        sisaBulanLalu = cur.sisaAwal;
+        sisaTotal = cur.sisaAkhir;
+      } else if (led.months.length > 0) {
+        sisaBulanLalu = led.months[led.months.length - 1].sisaAkhir;
+        sisaTotal = sisaBulanLalu;
+      }
+
+      var outstandingLimit = Math.max(0, sisaBulanLalu - bayarBulanIni);
+      var limitEfektif = aktif ? Math.max(0, globalLimit - outstandingLimit) : -1;
+      var sts;
+      if (m.blokir) sts = 'Blokir';
+      else if (!aktif) sts = 'Tanpa Limit';
+      else if (limitEfektif <= 0) sts = 'Terkunci';
+      else sts = 'Aktif';
+
+      result.push({
+        noAnggota: m.noAnggota,
+        nama: m.nama,
+        kelompok: m.kelompok,
+        noHp: m.hp,
+        blokir: m.blokir,
+        limitGlobal: globalLimit,
+        limitAktif: aktif,
+        tagihanBulanIni: tagihanBulanIni,
+        bayarBulanIni: bayarBulanIni,
+        sisaBulanLalu: sisaBulanLalu,
+        sisaTotal: sisaTotal,
+        outstandingLimit: outstandingLimit,
+        limitEfektif: limitEfektif,
+        status: sts
+      });
+    }
+    result.sort(function (a, b) { return (b.sisaTotal || 0) - (a.sisaTotal || 0); });
+
+    return {
+      status: 'sukses',
+      limitGlobal: globalLimit,
+      limitAktif: aktif,
+      bulanBerjalan: nowM + 1,
+      tahunBerjalan: nowY,
+      data: result
+    };
+  } catch (e) {
+    return { status: 'error', msg: "Server Error: " + e.toString() };
+  }
+}
+
+// Detail per anggota: ledger bulanan (tagihan/bayar/sisa/tagihan luar bulan)
+// + limit efektif per bulan + status bulan berjalan.
+function getDetailLimitKreditAnggota(noAnggota) {
+  try {
+    var q = String(noAnggota || '').trim().toLowerCase();
+    if (!q) return { status: 'error', msg: 'No Anggota kosong.' };
+    var dataPiutang = _getCachedPiutangData();
+    var dataUsers = _getCachedUsersData();
+    var piutangEvents = _buildPiutangEvents(dataPiutang);
+    var payRows = _getCachedPaymentRows();
+    var globalLimit = _getGlobalLimitCached();
+    var aktif = _isLimitKreditAktif();
+
+    var nama = '-', kelompok = '-', hp = '', blokir = false;
+    for (var j = 1; j < dataUsers.length; j++) {
+      if (String(dataUsers[j][0]).trim().toLowerCase() === q) {
+        nama = String(dataUsers[j][2] || '-');
+        kelompok = String(dataUsers[j][4] || '-');
+        hp = String(dataUsers[j][10] || '');
+        var blRaw = String(dataUsers[j][23] || '').trim().toLowerCase();
+        blokir = (blRaw === 'y' || blRaw === 'yes' || blRaw === '1' || blRaw === 'blokir');
+        break;
+      }
+    }
+
+    var led = _buildLedgerMember(q, piutangEvents, payRows);
+    var months = [];
+    for (var i = 0; i < led.months.length; i++) {
+      var r = led.months[i];
+      months.push({
+        y: r.y,
+        m: r.m,
+        isCurrent: r.isCurrent,
+        tagihan: r.tagihan,
+        bayar: r.bayar,
+        sisaAwal: r.sisaAwal,
+        sisaAkhir: r.sisaAkhir,
+        limitEfektif: aktif ? Math.max(0, globalLimit - r.sisaAwal) : -1,
+        limitNol: aktif && (globalLimit - r.sisaAwal) <= 0
+      });
+    }
+
+    var cur = null;
+    for (var ci = 0; ci < months.length; ci++) if (months[ci].isCurrent) cur = months[ci];
+    var tagihanBulanIni = cur ? cur.tagihan : 0;
+    var bayarBulanIni = cur ? cur.bayar : 0;
+    var sisaBulanLalu = cur ? cur.sisaAwal : (led.months.length ? led.months[led.months.length - 1].sisaAkhir : 0);
+    var outstandingLimit = Math.max(0, sisaBulanLalu - bayarBulanIni);
+    var limitEfektifNow = aktif ? Math.max(0, globalLimit - outstandingLimit) : -1;
+    var sisaTotal = cur ? cur.sisaAkhir : sisaBulanLalu;
+
+    return {
+      status: 'sukses',
+      noAnggota: String(noAnggota).trim(),
+      nama: nama,
+      kelompok: kelompok,
+      noHp: hp,
+      blokir: blokir,
+      limitGlobal: globalLimit,
+      limitAktif: aktif,
+      bulanBerjalan: (new Date()).getMonth() + 1,
+      tahunBerjalan: (new Date()).getFullYear(),
+      tagihanBulanIni: tagihanBulanIni,
+      bayarBulanIni: bayarBulanIni,
+      sisaBulanLalu: sisaBulanLalu,
+      outstandingLimit: outstandingLimit,
+      limitEfektifNow: limitEfektifNow,
+      sisaTotal: sisaTotal,
+      months: months
+    };
+  } catch (e) {
+    return { status: 'error', msg: "Server Error: " + e.toString() };
+  }
+}
+
 function kirimEmailNotifHutang(dataKirim) {
   try {
     if (!dataKirim || dataKirim.length === 0) return { status: 'error', msg: 'Data kirim kosong.' };

@@ -1978,6 +1978,8 @@
                 onclick="switchTab('admin-rekap-pembayaran')"><i class="bi bi-wallet2"></i> Data Pembayaran</button>
             <button class="nav-btn hidden" id="tab-admin-rekap-pembayaran-all"
                 onclick="switchTab('admin-rekap-pembayaran-all')"><i class="bi bi-cash-coin"></i> Rekap Pembayaran</button>
+            <button class="nav-btn hidden" id="tab-admin-monitoring-limit"
+                onclick="switchTab('admin-monitoring-limit')"><i class="bi bi-speedometer2"></i> Limit & Tagihan</button>
             <button class="nav-btn hidden" id="tab-admin-toko" onclick="switchTab('admin-toko')"><i
                     class="bi bi-shop-window"></i> Kelola WA Toko</button>
             <button class="nav-btn hidden" id="tab-kelola-akun" onclick="switchTab('kelola-akun')"><i
@@ -3396,6 +3398,103 @@
                     <span id="page-info-pembayaran-all" class="page-info">Hal 1 / 1</span>
                     <button id="btn-next-pembayaran-all" class="btn-page" onclick="changePageRekapPembayaranAll(1)">Next
                         ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-admin-monitoring-limit" class="hidden">
+            <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #16a085; padding-bottom:10px;"><i
+                    class="bi bi-speedometer2" style="color:#16a085;"></i> Monitoring Limit Kredit & Tagihan</h3>
+            <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Sisa tagihan bulan lalu (yang belum lunas) otomatis
+                terakumulasi dan mengurangi <b>limit bulan berjalan</b>. Jika sisa tagihan bulan lalu sudah mencapai
+                limit global, limit bulan berjalan menjadi <b>Rp 0</b> dan kredit toko <b>diblokir</b> sampai tagihan
+                dilunasi.</p>
+
+            <div class="admin-card-container">
+                <div class="admin-card ac-blue">
+                    <h4>Limit Global</h4>
+                    <div class="angka" id="stat-limit-global">Rp 0</div>
+                </div>
+                <div class="admin-card">
+                    <h4>Bulan Berjalan</h4>
+                    <div class="angka" id="stat-limit-bulan-berjalan" style="font-size:16px;">-</div>
+                </div>
+                <div class="admin-card">
+                    <h4>Jumlah Anggota</h4>
+                    <div class="angka" id="stat-limit-jml-anggota">0</div>
+                </div>
+                <div class="admin-card ac-red">
+                    <h4>Kredit Terkunci</h4>
+                    <div class="angka" id="stat-limit-jml-terkunci">0</div>
+                </div>
+            </div>
+
+            <div class="filter-container">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%;">
+                    <div style="flex:1; min-width:200px;">
+                        <label>Cari Nama/No/Kelompok:</label>
+                        <input type="text" id="search-limit-admin" placeholder="🔍 Cari..."
+                            oninput="applyFilterLimitAdmin()">
+                    </div>
+                    <div style="flex:1; min-width:180px;">
+                        <label>Status:</label>
+                        <select id="filter-limit-status" onchange="applyFilterLimitAdmin()">
+                            <option value="ALL">Semua Status</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Terkunci">Terkunci (Limit 0)</option>
+                            <option value="Blokir">Blokir Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <button style="background:#17a2b8; width:auto; padding:8px 15px;"
+                    onclick="loadRekapLimitAdmin()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                <button style="background:#27ae60; width:auto; padding:8px 15px;"
+                    onclick="exportRekapLimitAdminExcel()"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+            </div>
+
+            <div class="table-responsive">
+                <table id="tabel-limit-admin" class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;">No</th>
+                            <th>No Anggota</th>
+                            <th>Nama</th>
+                            <th>Kelompok</th>
+                            <th class="text-right">Sisa Tagihan Bulan Lalu</th>
+                            <th class="text-right">Tagihan Bulan Ini</th>
+                            <th class="text-right">Bayar Bulan Ini</th>
+                            <th class="text-right">Sisa Tagihan Total</th>
+                            <th class="text-right">Limit Global</th>
+                            <th class="text-right">Limit Efektif</th>
+                            <th style="text-align:center;">Status</th>
+                            <th style="text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="12" style="text-align:center;">Memuat data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:15px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="font-size:11px; font-weight:700; color:#7f8c8d;">Tampilkan:</label>
+                    <select id="limit-limit-admin" class="filter-select" onchange="changeLimitLimitAdmin()" style="width:auto; font-size:12px; padding:6px 10px;">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="pagination-wrapper" style="margin-top:0;">
+                    <button id="btn-prev-limit-admin" class="btn-page" onclick="changePageLimitAdmin(-1)">◀ Prev</button>
+                    <span id="page-info-limit-admin" class="page-info">Hal 1 / 1</span>
+                    <button id="btn-next-limit-admin" class="btn-page" onclick="changePageLimitAdmin(1)">Next ▶</button>
                 </div>
             </div>
         </div>
@@ -5175,6 +5274,7 @@
                 safeSetValue('filter-pembayaran-all-tahun', d.getFullYear());
                 switchSubTabRekapPembayaranAll('tagihan');
             }
+            else if (tab === 'admin-monitoring-limit') { loadRekapLimitAdmin(); }
             else if (tab === 'admin-settings') { loadGlobalLimit(); loadWaSettings().then(fillWaInputs); }
             else if (tab === 'admin-notif') { loadAdminNotifikasi(); }
             else if (tab === 'notifikasi') { renderUserNotifikasi(); }
@@ -5555,7 +5655,7 @@
             document.getElementById('tab-notifikasi').classList.remove('hidden');
 
             if (res.role === 'Admin') {
-                ['tab-admin', 'tab-admin-unit', 'tab-admin-potongan', 'tab-admin-rekap-kredit-toko', 'tab-admin-rekap-pembayaran', 'tab-admin-rekap-pembayaran-all', 'tab-kelola-akun', 'tab-admin-toko', 'tab-redeem', 'tab-laporan', 'tab-admin-notif', 'tab-admin-settings'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
+                ['tab-admin', 'tab-admin-unit', 'tab-admin-potongan', 'tab-admin-rekap-kredit-toko', 'tab-admin-rekap-pembayaran', 'tab-admin-rekap-pembayaran-all', 'tab-admin-monitoring-limit', 'tab-kelola-akun', 'tab-admin-toko', 'tab-redeem', 'tab-laporan', 'tab-admin-notif', 'tab-admin-settings'].forEach(function (id) { document.getElementById(id).classList.remove('hidden'); });
                 document.getElementById('info-toko').innerHTML = "ADMIN PUSAT"; document.getElementById('info-role').innerHTML = "<span class='badge-role role-admin'>ADMIN</span>"; switchTab('redeem');
                 setTimeout(function () { prefetchRekapHutangAdmin(); }, 200);
             }
@@ -8888,6 +8988,238 @@
             var wbX = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wbX, wsX, 'Rekap Pembayaran');
             XLSX.writeFile(wbX, 'Rekap_Pembayaran_Anggota.xlsx');
+        }
+
+        // ==========================================
+        // ADMIN: MONITORING LIMIT KREDIT & TAGIHAN
+        // ==========================================
+        var rawLimitAdmin = [];
+        var filteredLimitAdmin = [];
+        var limitAdminPage = 1;
+        var limitAdminLimit = 25;
+
+        function loadRekapLimitAdmin() {
+            var tb = document.querySelector('#tabel-limit-admin tbody');
+            if (tb) {
+                var skel = '';
+                for (var si = 0; si < 5; si++) {
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                }
+                tb.innerHTML = skel;
+            }
+            safeSetText('stat-limit-global', '...');
+            safeSetText('stat-limit-bulan-berjalan', '...');
+            safeSetText('stat-limit-jml-anggota', '...');
+            safeSetText('stat-limit-jml-terkunci', '...');
+
+            google.script.run.withSuccessHandler(function (res) {
+                if (res.status === 'sukses') {
+                    rawLimitAdmin = res.data || [];
+                    safeSetText('stat-limit-global', res.limitAktif ? 'Rp ' + Number(res.limitGlobal || 0).toLocaleString('id-ID') : 'Limit Nonaktif');
+                    safeSetText('stat-limit-bulan-berjalan', (namaBulan[res.bulanBerjalan] || res.bulanBerjalan) + ' ' + res.tahunBerjalan);
+                    safeSetText('stat-limit-jml-anggota', rawLimitAdmin.length.toLocaleString('id-ID'));
+                    var jmlTerkunci = rawLimitAdmin.filter(function (a) { return a.status === 'Terkunci' || a.status === 'Blokir'; }).length;
+                    safeSetText('stat-limit-jml-terkunci', jmlTerkunci.toLocaleString('id-ID'));
+                    applyFilterLimitAdmin();
+                } else {
+                    Swal.fire('Error', res.msg || 'Gagal memuat data.', 'error');
+                    rawLimitAdmin = [];
+                    applyFilterLimitAdmin();
+                }
+            }).withFailureHandler(function (err) {
+                Swal.fire('Error', 'Server Error: ' + err, 'error');
+                rawLimitAdmin = [];
+                applyFilterLimitAdmin();
+            }).getRekapLimitKreditAdmin();
+        }
+
+        function applyFilterLimitAdmin() {
+            var q = '';
+            var elQ = document.getElementById('search-limit-admin');
+            if (elQ) q = elQ.value.toLowerCase().trim();
+            var sts = 'ALL';
+            var elS = document.getElementById('filter-limit-status');
+            if (elS) sts = elS.value;
+
+            filteredLimitAdmin = rawLimitAdmin.filter(function (a) {
+                if (q) {
+                    var hay = (a.noAnggota + ' ' + a.nama + ' ' + a.kelompok).toLowerCase();
+                    if (hay.indexOf(q) === -1) return false;
+                }
+                if (sts !== 'ALL' && a.status !== sts) return false;
+                return true;
+            });
+            limitAdminPage = 1;
+            renderLimitAdminTable();
+        }
+
+        function badgeStatusLimit(sts) {
+            if (sts === 'Aktif') return '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:#27ae60; background:#e8f8f0;">Aktif</span>';
+            if (sts === 'Terkunci') return '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:#e74c3c; background:#fdecea;">Terkunci</span>';
+            if (sts === 'Blokir') return '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:#8e44ad; background:#f4ecf7;">Blokir</span>';
+            if (sts === 'Tanpa Limit') return '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:#7f8c8d; background:#f1f2f6;">Tanpa Limit</span>';
+            return '<span style="display:inline-block; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:700; color:#7f8c8d; background:#f1f2f6;">' + sts + '</span>';
+        }
+
+        function renderLimitAdminTable() {
+            var tb = document.querySelector('#tabel-limit-admin tbody');
+            if (!tb) return;
+            var elL = document.getElementById('limit-limit-admin');
+            if (elL) limitAdminLimit = parseInt(elL.value, 10) || 25;
+            var totalPages = Math.max(1, Math.ceil(filteredLimitAdmin.length / limitAdminLimit));
+            if (limitAdminPage > totalPages) limitAdminPage = totalPages;
+            if (limitAdminPage < 1) limitAdminPage = 1;
+            var start = (limitAdminPage - 1) * limitAdminLimit;
+            var slice = filteredLimitAdmin.slice(start, start + limitAdminLimit);
+
+            if (slice.length === 0) {
+                tb.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:#95a5a6;">Tidak ada data anggota.</td></tr>';
+            } else {
+                var html = '';
+                slice.forEach(function (a, idx) {
+                    var nomor = start + idx + 1;
+                    html += '<tr>' +
+                        '<td class="text-center">' + nomor + '</td>' +
+                        '<td><b>' + (a.noAnggota || '-') + '</b></td>' +
+                        '<td>' + (a.nama || '-') + '</td>' +
+                        '<td>' + (a.kelompok || '-') + '</td>' +
+                        '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.sisaBulanLalu) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><b>Rp ' + (Number(a.tagihanBulanIni) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:#27ae60;"><b>Rp ' + (Number(a.bayarBulanIni) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><b>Rp ' + (Number(a.sisaTotal) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right">' + (a.limitAktif ? 'Rp ' + (Number(a.limitGlobal) || 0).toLocaleString('id-ID') : '-') + '</td>' +
+                        '<td class="text-right"><span style="font-weight:800; color:' + (a.limitEfektif <= 0 ? '#e74c3c' : '#16a085') + ';">' + (a.limitAktif ? 'Rp ' + (Number(a.limitEfektif) || 0).toLocaleString('id-ID') : '-') + '</span></td>' +
+                        '<td class="text-center">' + badgeStatusLimit(a.status) + '</td>' +
+                        '<td class="text-center"><button class="btn-icon-sm" title="Detail Limit" onclick="lihatDetailLimitAnggota(\'' + String(a.noAnggota || '').replace(/'/g, '') + '\')"><i class="bi bi-eye"></i></button></td>' +
+                        '</tr>';
+                });
+                tb.innerHTML = html;
+            }
+            safeSetText('page-info-limit-admin', 'Hal ' + limitAdminPage + ' / ' + totalPages);
+            var bp = document.getElementById('btn-prev-limit-admin');
+            var bn = document.getElementById('btn-next-limit-admin');
+            if (bp) bp.disabled = (limitAdminPage <= 1);
+            if (bn) bn.disabled = (limitAdminPage >= totalPages);
+        }
+
+        function changePageLimitAdmin(dir) {
+            limitAdminPage += dir;
+            renderLimitAdminTable();
+        }
+
+        function changeLimitLimitAdmin() {
+            var el = document.getElementById('limit-limit-admin');
+            limitAdminLimit = el ? parseInt(el.value, 10) || 25 : 25;
+            limitAdminPage = 1;
+            renderLimitAdminTable();
+        }
+
+        function exportRekapLimitAdminExcel() {
+            if (filteredLimitAdmin.length === 0) return Swal.fire('Info', 'Data kosong.', 'info');
+            var now = new Date();
+            var blnNama = namaBulan[now.getMonth() + 1] || '';
+            var d = [];
+            d.push(['MONITORING LIMIT KREDIT & TAGIHAN ANGGOTA']);
+            d.push(['Bulan Berjalan: ' + blnNama + ' ' + now.getFullYear()]);
+            d.push([]);
+            d.push(['No', 'No Anggota', 'Nama', 'Kelompok', 'Sisa Tagihan Bulan Lalu', 'Tagihan Bulan Ini', 'Bayar Bulan Ini', 'Sisa Tagihan Total', 'Limit Global', 'Limit Efektif', 'Status']);
+            filteredLimitAdmin.forEach(function (a, idx) {
+                d.push([idx + 1, a.noAnggota, a.nama, a.kelompok, Number(a.sisaBulanLalu) || 0, Number(a.tagihanBulanIni) || 0, Number(a.bayarBulanIni) || 0, Number(a.sisaTotal) || 0, a.limitAktif ? Number(a.limitGlobal) || 0 : '-', a.limitAktif ? Number(a.limitEfektif) || 0 : '-', a.status]);
+            });
+            var ws = XLSX.utils.aoa_to_sheet(d);
+            ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 25 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 14 }, { wch: 12 }];
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Monitoring Limit');
+            XLSX.writeFile(wb, 'Monitoring_Limit_Kredit_Anggota.xlsx');
+        }
+
+        function lihatDetailLimitAnggota(noAnggota) {
+            showLoading('Memuat detail anggota...');
+            google.script.run.withSuccessHandler(function (res) {
+                hideLoading();
+                if (res.status !== 'sukses') { Swal.fire('Error', res.msg || 'Gagal memuat detail.', 'error'); return; }
+                var rp = function (v) { return 'Rp ' + (Number(v) || 0).toLocaleString('id-ID'); };
+
+                var baris = '<div style="background:#f8f9fa; border:1px solid #edf2f7; border-radius:14px; padding:14px 16px; margin-bottom:14px;">' +
+                    '<div style="display:grid; grid-template-columns:130px 1fr; row-gap:8px; font-size:13px; align-items:baseline;">' +
+                    '<div style="color:#718096; font-weight:600; font-size:11px; text-transform:uppercase;">Nama</div>' +
+                    '<div style="color:#2d3748; font-weight:800;">' + res.nama + ' <span style="color:#718096; font-weight:400; font-size:11px;">(' + res.noAnggota + ')</span></div>' +
+                    '<div style="color:#718096; font-weight:600; font-size:11px; text-transform:uppercase;">Kelompok</div>' +
+                    '<div style="color:#2d3748;">' + res.kelompok + '</div>' +
+                    '<div style="color:#718096; font-weight:600; font-size:11px; text-transform:uppercase;">Status</div>' +
+                    '<div>' + (res.blokir ? '<span style="color:#e74c3c; font-weight:700;"><i class="bi bi-x-octagon-fill"></i> Blokir Manual</span>' : '<span style="color:#27ae60; font-weight:700;"><i class="bi bi-check-circle-fill"></i> Tidak Diblokir</span>') + '</div>' +
+                    '</div></div>';
+
+                var statCards = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px;">' +
+                    '<div style="background:#eaf8ff; border:1px solid #bee3f8; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#2b6cb0; text-transform:uppercase;">Sisa Tagihan Bulan Lalu</div>' +
+                    '<div style="font-size:17px; font-weight:900; color:#2c5282; margin-top:4px;">' + rp(res.sisaBulanLalu) + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Dibawa ke bulan berjalan = pengurang limit</div></div>' +
+                    '<div style="background:#fff5f5; border:1px solid #fed7d7; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#9b2c2c; text-transform:uppercase;">Limit Efektif Sekarang</div>' +
+                    '<div style="font-size:17px; font-weight:900; color:' + (res.limitEfektifNow <= 0 ? '#e53e3e' : '#276749') + '; margin-top:4px;">' + (res.limitAktif ? rp(res.limitEfektifNow) : 'Limit Nonaktif') + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + (res.limitAktif && res.limitEfektifNow <= 0 ? 'Transaksi kredit DIBLOKIR' : 'Transaksi kredit dapat berjalan') + '</div></div>' +
+                    '<div style="background:#f0fff4; border:1px solid #c6f6d5; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#276749; text-transform:uppercase;">Limit Global</div>' +
+                    '<div style="font-size:17px; font-weight:900; color:#22543d; margin-top:4px;">' + (res.limitAktif ? rp(res.limitGlobal) : 'Nonaktif') + '</div></div>' +
+                    '<div style="background:#ccfbf1; border:1px solid #99f6e4; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#115e59; text-transform:uppercase;">Sisa Tagihan Total</div>' +
+                    '<div style="font-size:17px; font-weight:900; color:#134e4a; margin-top:4px;">' + rp(res.sisaTotal) + '</div></div>' +
+                    '</div>';
+
+                var rowsHtml = '';
+                (res.months || []).forEach(function (r) {
+                    var lbl = (namaBulan[r.m] || r.m) + ' ' + r.y;
+                    if (r.isCurrent) lbl += ' <span style="background:#16a085;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;">BULAN BERJALAN</span>';
+                    var isCur = !!r.isCurrent;
+                    var limEff = isCur ? res.limitEfektifNow : r.limitEfektif;
+                    var limNol = isCur ? (res.limitEfektifNow <= 0) : r.limitNol;
+                    rowsHtml += '<tr style="' + (isCur ? 'background:#f0fdfa;' : '') + '">' +
+                        '<td style="white-space:nowrap; font-weight:700; font-size:12px;">' + lbl + '</td>' +
+                        '<td class="text-right">' + rp(r.tagihan) + '</td>' +
+                        '<td class="text-right" style="color:#27ae60;">' + rp(r.bayar) + '</td>' +
+                        '<td class="text-right" style="color:#718096; font-size:11px;">' + rp(r.sisaAwal) + '</td>' +
+                        '<td class="text-right" style="color:' + (r.sisaAkhir > 0 ? '#c0392b' : '#2ecc71') + '; font-weight:800;">' + rp(r.sisaAkhir) + '</td>' +
+                        '<td class="text-right" style="font-weight:800; color:' + (limNol ? '#e74c3c' : '#16a085') + ';">' + (res.limitAktif ? rp(limEff) : '-') + '</td>' +
+                        '<td class="text-center">' + (limNol
+                            ? '<span style="color:#e74c3c; font-size:13px;" title="Kredit diblokir (limit 0)"><i class="bi bi-x-octagon-fill"></i></span>'
+                            : '<span style="color:#27ae60; font-size:13px;" title="Kredit terbuka"><i class="bi bi-check-circle-fill"></i></span>') + '</td>' +
+                        '</tr>';
+                });
+                if (!res.months || res.months.length === 0) {
+                    rowsHtml = '<tr><td colspan="7" style="text-align:center; padding:16px; color:#95a5a6;">Belum ada aktivitas kredit toko / pembayaran untuk anggota ini.</td></tr>';
+                }
+
+                var keterangan = '<div style="background:#fffbe6; border:1px solid #fef3c7; border-radius:10px; padding:10px 12px; font-size:11px; color:#92400e; margin-top:12px; line-height:1.6;">' +
+                    '<b>Cara membaca:</b> Limit Efektif Bulan Ini = Limit Global − Sisa Tagihan Bulan Lalu.<br>' +
+                    'Sisa tagihan bulan lalu yang belum lunas terakumulasi dan mengurangi limit sampai Rp 0 (kredit diblokir). ' +
+                    'Contoh: sisa akhir Juli dibawa ke Agustus; sisa akhir Agustus (termasuk tagihan Juli yang belum dibayar) mengurangi limit September.</div>';
+
+                Swal.fire({
+                    title: '<span style="font-size:18px; font-weight:800; color:#2d3748;">Detail Limit &amp; Tagihan</span>',
+                    html: '<div style="text-align:left; font-family:\'Segoe UI\', system-ui, sans-serif;">' + baris + statCards +
+                        '<div style="font-weight:700; color:#4a5568; text-transform:uppercase; font-size:11px; margin-bottom:6px;">Riwayat Bulanan (Tagihan & Pembayaran)</div>' +
+                        '<div style="max-height:320px; overflow:auto; border:1px solid #e2e8f0; border-radius:12px;">' +
+                        '<table style="width:100%; border-collapse:collapse; font-family:\'Segoe UI\',system-ui,sans-serif; background:#fff;">' +
+                        '<thead><tr style="background:#f7fafc; text-align:left;">' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096;">Bulan</th>' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Tagihan</th>' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Bayar</th>' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Sisa Awal</th>' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Sisa Akhir</th>' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Limit Efektif</th>' +
+                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:center; width:30px;"></th>' +
+                        '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' + keterangan + '</div>',
+                    confirmButtonText: 'Tutup',
+                    confirmButtonColor: '#2d3748',
+                    width: '640px',
+                    padding: '1.5rem',
+                    background: '#ffffff',
+                    borderRadius: '20px',
+                    showClass: { popup: 'animate__animated animate__fadeInUp animate__faster' },
+                    hideClass: { popup: 'animate__animated animate__fadeOutDown animate__faster' }
+                });
+            }).withFailureHandler(function (err) { hideLoading(); Swal.fire('Error', 'Server Error: ' + err, 'error'); }).getDetailLimitKreditAnggota(noAnggota);
         }
 
         function applyFilterKreditTokoAdmin() {
