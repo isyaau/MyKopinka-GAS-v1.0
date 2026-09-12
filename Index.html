@@ -9154,96 +9154,110 @@
                 if (res.status !== 'sukses') { Swal.fire('Error', res.msg || 'Gagal memuat detail.', 'error'); return; }
                 var rp = function (v) { return 'Rp ' + (Number(v) || 0).toLocaleString('id-ID'); };
 
-                var baris = '<div style="background:#f8f9fa; border:1px solid #edf2f7; border-radius:14px; padding:14px 16px; margin-bottom:14px;">' +
-                    '<div style="display:grid; grid-template-columns:130px 1fr; row-gap:8px; font-size:13px; align-items:baseline;">' +
-                    '<div style="color:#718096; font-weight:600; font-size:11px; text-transform:uppercase;">Nama</div>' +
-                    '<div style="color:#2d3748; font-weight:800;">' + res.nama + ' <span style="color:#718096; font-weight:400; font-size:11px;">(' + res.noAnggota + ')</span></div>' +
-                    '<div style="color:#718096; font-weight:600; font-size:11px; text-transform:uppercase;">Kelompok</div>' +
-                    '<div style="color:#2d3748;">' + res.kelompok + '</div>' +
-                    '<div style="color:#718096; font-weight:600; font-size:11px; text-transform:uppercase;">Status</div>' +
-                    '<div>' + (res.blokir ? '<span style="color:#e74c3c; font-weight:700;"><i class="bi bi-x-octagon-fill"></i> Blokir Manual</span>' : '<span style="color:#27ae60; font-weight:700;"><i class="bi bi-check-circle-fill"></i> Tidak Diblokir</span>') + '</div>' +
-                    '</div></div>';
-
                 var mCur = Number(res.bulanBerjalan) || 1;
                 var mLalu = mCur - 1; if (mLalu < 1) mLalu = 12;
                 var mSebelum = mCur - 2; if (mSebelum < 1) mSebelum += 12;
-                var lblBlnIni = namaBulan[mCur] || mCur;
-                var lblBlnLalu = namaBulan[mLalu] || mLalu;
-                var lblBlnSebelum = namaBulan[mSebelum] || mSebelum;
+                var lblIni = namaBulan[mCur] || mCur;
+                var lblLalu = namaBulan[mLalu] || mLalu;
+                var lblSebelum = namaBulan[mSebelum] || mSebelum;
 
-                var statCards = '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;">' +
-                    '<div style="background:#eaf8ff; border:1px solid #bee3f8; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#2b6cb0; text-transform:uppercase;">Sisa Belum Terbayar (' + lblBlnSebelum + ')</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:#2c5282; margin-top:4px;">' + rp(res.sisaBelumTerbayar) + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Satu-satunya pengurang limit bulan berjalan</div></div>' +
-                    '<div style="background:#fffaf0; border:1px solid #feebc8; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#975a16; text-transform:uppercase;">Tagihan Bulan Lalu (' + lblBlnLalu + ')</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:#744210; margin-top:4px;">' + rp(res.tagihanBulanLalu) + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + rp(res.transSutomoLalu) + ' + jasa Sutomo ' + rp(res.jasaSutomoLalu) + ' + ' + rp(res.transInkaLalu) + ' + jasa INKA ' + rp(res.jasaInkaLalu) + ' (sudah termasuk jasa 1,5%)</div></div>' +
-                    '<div style="background:#ebf8ff; border:1px solid #bae6fd; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#0369a1; text-transform:uppercase;">Tagihan Bulan Ini (' + lblBlnIni + ')</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:#0c4a6e; margin-top:4px;">' + rp(res.tagihanBulanIni) + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + rp(res.transSutomoIni) + ' + jasa Sutomo ' + rp(res.jasaSutomoIni) + ' + ' + rp(res.transInkaIni) + ' + jasa INKA ' + rp(res.jasaInkaIni) + ' (sudah termasuk jasa 1,5%)</div></div>' +
-                    '<div style="background:#f0fff4; border:1px solid #c6f6d5; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#276749; text-transform:uppercase;">Limit Global</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:#22543d; margin-top:4px;">' + (res.limitAktif ? rp(res.limitGlobal) : 'Nonaktif') + '</div></div>' +
-                    '<div style="background:#fff5f5; border:1px solid #fed7d7; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#9b2c2c; text-transform:uppercase;">Limit Efektif Bulan Ini</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:' + (res.limitEfektifNow <= 0 ? '#e53e3e' : '#276749') + '; margin-top:4px;">' + (res.limitAktif ? rp(res.limitEfektifNow) : 'Limit Nonaktif') + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + (res.limitAktif && res.limitEfektifNow <= 0 ? 'Transaksi kredit DIBLOKIR' : 'Transaksi kredit dapat berjalan') + '</div></div>' +
-                    '<div style="background:#ccfbf1; border:1px solid #99f6e4; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#115e59; text-transform:uppercase;">Sisa Tagihan Total</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:#134e4a; margin-top:4px;">' + rp(res.sisaTotal) + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Saldo sisa seluruh bulan (akumulasi)</div>' +
+                function rincianJasa(trSt, jsSt, trIn, jsIn) {
+                    if (!(Number(trSt) || 0) && !(Number(trIn) || 0)) return 'Tidak ada transaksi pada bulan ini';
+                    return 'Sutomo ' + rp(trSt) + ' (jasa ' + rp(jsSt) + ') · INKA ' + rp(trIn) + ' (jasa ' + rp(jsIn) + ')';
+                }
+
+                var statusChip = res.blokir
+                    ? '<span style="display:inline-flex;align-items:center;gap:5px;background:#fdecea;color:#e74c3c;border:1px solid #f5c6c0;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;flex-shrink:0;"><i class="bi bi-x-octagon-fill"></i> Blokir Manual</span>'
+                    : '<span style="display:inline-flex;align-items:center;gap:5px;background:#e8f8f0;color:#27ae60;border:1px solid #bfe8d4;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;flex-shrink:0;"><i class="bi bi-check-circle-fill"></i> Tidak Diblokir</span>';
+
+                var header = '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,#e8f8f5,#ffffff);border:1px solid #d2eee8;border-radius:16px;margin-bottom:14px;">' +
+                    '<div style="width:48px;height:48px;border-radius:50%;background:#16a085;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0;">' + (res.nama ? String(res.nama).trim().charAt(0).toUpperCase() : '?') + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div style="font-weight:800;color:#2d3748;font-size:15px;">' + res.nama + ' <span style="color:#a0aec0;font-weight:600;font-size:12px;">(' + res.noAnggota + ')</span></div>' +
+                    '<div style="color:#718096;font-size:12px;margin-top:2px;">Kelompok: <b>' + res.kelompok + '</b></div>' +
+                    '</div>' + statusChip + '</div>';
+
+                var effNow = Number(res.limitEfektifNow) || 0;
+                var blokBadge = '';
+                if (!res.limitAktif) {
+                    blokBadge = '<span style="background:#f1f2f6;color:#7f8c8d;border:1px solid #dcdde1;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;text-align:center;">LIMIT NONAKTIF</span>';
+                } else {
+                    blokBadge = effNow <= 0
+                        ? '<span style="background:#fdecea;color:#e74c3c;border:1px solid #f5c6c0;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;text-align:center;"><i class="bi bi-ban"></i> KREDIT TERKUNCI</span>'
+                        : '<span style="background:#e8f8f0;color:#16a085;border:1px solid #bfe8d4;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;text-align:center;"><i class="bi bi-unlock-fill"></i> KREDIT AKTIF</span>';
+                }
+
+                var ringkasan = '<div style="display:grid;grid-template-columns:170px 1fr;gap:12px;margin-bottom:14px;">' +
+                    '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;">' +
+                    '<div style="font-size:10px;font-weight:700;color:#718096;text-transform:uppercase;letter-spacing:.5px;">Limit Efektif Bulan Ini</div>' +
+                    '<div style="font-size:16px;font-weight:900;color:' + (res.limitAktif && effNow <= 0 ? '#e74c3c' : '#16a085') + ';">' + (res.limitAktif ? rp(effNow) : 'Nonaktif') + '</div>' +
+                    blokBadge +
+                    '<div style="padding-top:10px;border-top:1px dashed #e2e8f0;font-size:11px;color:#718096;">Limit Global<br><b style="color:#2d3748;font-size:13px;">' + (res.limitAktif ? rp(res.limitGlobal) : 'Nonaktif') + '</b></div>' +
+                    '</div>' +
+                    '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:12px 14px;">' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">' +
+                    '<div style="font-size:12px;color:#718096;line-height:1.5;">Sisa Belum Terbayar<br><b style="color:' + (Number(res.sisaBelumTerbayar) > 0 ? '#c0392b' : '#7f8c8d') + ';font-size:15px;">' + rp(res.sisaBelumTerbayar) + '</b><br><span style="font-size:10px;color:#a0aec0;">Pengurang limit · ' + lblSebelum + '</span></div>' +
+                    '<div style="font-size:12px;color:#718096;line-height:1.5;">Sisa Tagihan Total<br><b style="color:#2d3748;font-size:15px;">' + rp(res.sisaTotal) + '</b><br><span style="font-size:10px;color:#a0aec0;">Akumulasi semua bulan</span></div>' +
+                    '</div>' +
+                    '<div style="border-top:1px dashed #f0e0c0;padding:9px 0 7px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#975a16;"><span><b>Tagihan Bulan Lalu</b> <span style="color:#a0aec0;">(' + lblLalu + ')</span></span><b style="font-size:14px;color:#744210;">' + rp(res.tagihanBulanLalu) + '</b></div>' +
+                    '<div style="font-size:10px;color:#a0aec0;margin-top:2px;">' + rincianJasa(res.transSutomoLalu, res.jasaSutomoLalu, res.transInkaLalu, res.jasaInkaLalu) + '</div>' +
+                    '</div>' +
+                    '<div style="padding:7px 0;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#0369a1;"><span><b>Tagihan Bulan Ini</b> <span style="color:#a0aec0;">(' + lblIni + ')</span></span><b style="font-size:14px;color:#0c4a6e;">' + rp(res.tagihanBulanIni) + '</b></div>' +
+                    '<div style="font-size:10px;color:#a0aec0;margin-top:2px;">' + rincianJasa(res.transSutomoIni, res.jasaSutomoIni, res.transInkaIni, res.jasaInkaIni) + '</div>' +
+                    '</div>' +
+                    '<div style="padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#2e7d32;"><span><b>Bayar Bulan Ini</b> <span style="color:#a0aec0;">(' + lblIni + ')</span></span><b style="font-size:14px;color:#27ae60;">' + rp(res.bayarBulanIni) + '</b></div>' +
+                    '</div>' +
                     '</div>';
 
                 var rowsHtml = '';
-                (res.months || []).forEach(function (r) {
+                (res.months || []).forEach(function (r, idx) {
                     var lbl = (namaBulan[r.m] || r.m) + ' ' + r.y;
-                    if (r.isCurrent) lbl += ' <span style="background:#16a085;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;">BULAN BERJALAN</span>';
                     var isCur = !!r.isCurrent;
-                    var limEff = isCur ? res.limitEfektifNow : r.limitEfektif;
-                    var limNol = isCur ? (res.limitEfektifNow <= 0) : r.limitNol;
-                    rowsHtml += '<tr style="' + (isCur ? 'background:#f0fdfa;' : '') + '">' +
-                        '<td style="white-space:nowrap; font-weight:700; font-size:12px;">' + lbl + '</td>' +
-                        '<td class="text-right">' + rp(r.tagihan) + '</td>' +
-                        '<td class="text-right" style="color:#27ae60;">' + rp(r.bayar) + '</td>' +
-                        '<td class="text-right" style="color:#718096; font-size:11px;">' + rp(r.sisaAwal) + '</td>' +
-                        '<td class="text-right" style="color:' + (r.sisaAkhir > 0 ? '#c0392b' : '#2ecc71') + '; font-weight:800;">' + rp(r.sisaAkhir) + '</td>' +
-                        '<td class="text-right" style="font-weight:800; color:' + (limNol ? '#e74c3c' : '#16a085') + ';">' + (res.limitAktif ? rp(limEff) : '-') + '</td>' +
-                        '<td class="text-center">' + (limNol
-                            ? '<span style="color:#e74c3c; font-size:13px;" title="Kredit diblokir (limit 0)"><i class="bi bi-x-octagon-fill"></i></span>'
-                            : '<span style="color:#27ae60; font-size:13px;" title="Kredit terbuka"><i class="bi bi-check-circle-fill"></i></span>') + '</td>' +
+                    var limEff = isCur ? effNow : r.limitEfektif;
+                    var limNol = isCur ? (effNow <= 0) : r.limitNol;
+                    var bg = isCur ? 'background:#eafaf7;' : (idx % 2 ? '' : 'background:#f7fafb;');
+                    rowsHtml += '<tr style="' + bg + '">' +
+                        '<td style="padding:8px 10px;white-space:nowrap;font-weight:700;font-size:12px;color:#2d3748;">' + lbl +
+                        (isCur ? ' <span style="background:#16a085;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;">SEKARANG</span>' : '') + '</td>' +
+                        '<td style="padding:8px 10px;text-align:right;font-size:12px;color:#c0392b;">' + rp(r.tagihan) + '</td>' +
+                        '<td style="padding:8px 10px;text-align:right;font-size:12px;color:#27ae60;">' + rp(r.bayar) + '</td>' +
+                        '<td style="padding:8px 10px;text-align:right;font-size:12px;font-weight:800;color:' + (r.sisaAkhir > 0 ? '#c0392b' : '#2ecc71') + ';">' + rp(r.sisaAkhir) + '</td>' +
+                        '<td style="padding:8px 10px;text-align:right;font-size:12px;font-weight:800;color:' + (limNol ? '#e74c3c' : '#16a085') + ';">' + (res.limitAktif ? rp(limEff) : '-') + '</td>' +
+                        '<td style="padding:8px 10px;text-align:center;">' + (limNol
+                            ? '<span style="color:#e74c3c;font-size:13px;" title="Kredit diblokir (limit 0)"><i class="bi bi-x-octagon-fill"></i></span>'
+                            : '<span style="color:#27ae60;font-size:13px;" title="Kredit terbuka"><i class="bi bi-check-circle-fill"></i></span>') + '</td>' +
                         '</tr>';
                 });
                 if (!res.months || res.months.length === 0) {
-                    rowsHtml = '<tr><td colspan="7" style="text-align:center; padding:16px; color:#95a5a6;">Belum ada aktivitas kredit toko / pembayaran untuk anggota ini.</td></tr>';
+                    rowsHtml = '<tr><td colspan="6" style="text-align:center; padding:18px; color:#95a5a6;">Belum ada aktivitas kredit toko / pembayaran untuk anggota ini.</td></tr>';
                 }
 
-                var keterangan = '<div style="background:#fffbe6; border:1px solid #fef3c7; border-radius:10px; padding:10px 12px; font-size:11px; color:#92400e; margin-top:12px; line-height:1.6;">' +
-                    '<b>Cara membaca:</b> Limit Efektif Bulan Ini = Limit Global − Sisa Belum Terbayar (' + lblBlnSebelum + ').<br>' +
-                    'Yang MENGURANGI limit bulan berjalan HANYA <b>sisa belum terbayar</b> (utang sebelum bulan lalu). ' +
-                    'Tagihan bulan lalu (' + lblBlnLalu + ') TIDAK mengurangi limit bulan berjalan. ' +
-                    'Pembayaran diprioritaskan melunasi <b>sisa belum terbayar</b> terlebih dahulu, baru <b>tagihan bulan lalu</b>.</div>';
+                var keterangan = '<div style="background:#f8f9fa;border:1px solid #edf2f7;border-radius:14px;padding:12px 14px;font-size:11.5px;color:#4a5568;line-height:1.8;margin-top:12px;">' +
+                    '<div style="font-weight:800;color:#2d3748;margin-bottom:6px;text-transform:uppercase;font-size:10px;letter-spacing:.5px;">Cara Membaca</div>' +
+                    '<div style="display:flex;gap:8px;"><span style="color:#16a085;flex-shrink:0;">&#9656;</span><span><b>Limit = Limit Global &#8722; Sisa Belum Terbayar (' + lblSebelum + ')</b>. Tagihan bulan lalu (' + lblLalu + ') tidak mengurangi limit bulan berjalan.</span></div>' +
+                    '<div style="display:flex;gap:8px;"><span style="color:#16a085;flex-shrink:0;">&#9656;</span><span>Pembayaran melunasi <b>sisa belum terbayar</b> terlebih dahulu, baru <b>tagihan bulan lalu</b>.</span></div>' +
+                    '<div style="display:flex;gap:8px;"><span style="color:#16a085;flex-shrink:0;">&#9656;</span><span>Tabel bulanan = nilai <b>pokok</b> (belum termasuk biaya jasa 1,5%). Biaya jasa Toko Sutomo &amp; INKA tampil pada ringkasan di atas.</span></div>' +
+                    '</div>';
 
                 Swal.fire({
                     title: '<span style="font-size:18px; font-weight:800; color:#2d3748;">Detail Limit &amp; Tagihan</span>',
-                    html: '<div style="text-align:left; font-family:\'Segoe UI\', system-ui, sans-serif;">' + baris + statCards +
-                        '<div style="font-weight:700; color:#4a5568; text-transform:uppercase; font-size:11px; margin-bottom:6px;">Riwayat Bulanan (Tagihan & Pembayaran)</div>' +
+                    html: '<div style="text-align:left; font-family:\'Segoe UI\', system-ui, sans-serif;">' + header + ringkasan +
+                        '<div style="font-weight:700; color:#4a5568; text-transform:uppercase; font-size:11px; margin-bottom:6px; display:flex; align-items:baseline; gap:8px;">Riwayat Bulanan (Tagihan &amp; Pembayaran)<span style="font-weight:500; text-transform:none; color:#a0aec0; font-size:10px;">nilai pokok</span></div>' +
                         '<div style="max-height:320px; overflow:auto; border:1px solid #e2e8f0; border-radius:12px;">' +
                         '<table style="width:100%; border-collapse:collapse; font-family:\'Segoe UI\',system-ui,sans-serif; background:#fff;">' +
                         '<thead><tr style="background:#f7fafc; text-align:left;">' +
                         '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096;">Bulan</th>' +
                         '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Tagihan</th>' +
                         '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Bayar</th>' +
-                        '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Sisa Awal</th>' +
                         '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Sisa Akhir</th>' +
                         '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:right;">Limit Efektif</th>' +
                         '<th style="padding:8px 10px; font-size:10px; text-transform:uppercase; color:#718096; text-align:center; width:30px;"></th>' +
                         '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' + keterangan + '</div>',
                     confirmButtonText: 'Tutup',
                     confirmButtonColor: '#2d3748',
-                    width: '640px',
+                    width: '700px',
                     padding: '1.5rem',
                     background: '#ffffff',
                     borderRadius: '20px',
