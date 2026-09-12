@@ -2969,7 +2969,7 @@
                     </tbody>
                 </table>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:15px;">
                 <div style="display:flex; align-items:center; gap:6px;">
                     <label style="font-size:11px; font-weight:700; color:#7f8c8d;">Tampilkan:</label>
                     <select id="limit-kredit-toko-admin" class="filter-select" onchange="changeLimitKreditTokoAdmin()" style="width:auto; font-size:12px; padding:6px 10px;">
@@ -3054,7 +3054,16 @@
                     </tbody>
                 </table>
             </div>
-            <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:15px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="font-size:11px; font-weight:700; color:#7f8c8d;">Tampilkan:</label>
+                    <select id="limit-rekap-anggota" class="filter-select" onchange="changeLimitRekapAnggota()" style="width:auto; font-size:12px; padding:6px 10px;">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
                 <div class="pagination-wrapper" style="margin-top:0;">
                     <button id="btn-prev-rekap-anggota" class="btn-page" onclick="changePageRekapAnggota(-1)">◀ Prev</button>
                     <span id="page-info-rekap-anggota" class="page-info">Hal 1 / 1</span>
@@ -8781,6 +8790,8 @@ var skel = '';
             var tb = document.querySelector('#tabel-rekap-anggota tbody');
             if (!tb) return;
             var total = filteredRekapAnggota.length;
+            var limitEl = document.getElementById('limit-rekap-anggota');
+            if (limitEl) rekapAnggotaLimit = parseInt(limitEl.value, 10) || 25;
             var totalPages = Math.max(1, Math.ceil(total / rekapAnggotaLimit));
             if (rekapAnggotaPage > totalPages) rekapAnggotaPage = totalPages;
             var start = (rekapAnggotaPage - 1) * rekapAnggotaLimit;
@@ -8826,6 +8837,13 @@ var skel = '';
 
         function changePageRekapAnggota(dir) {
             rekapAnggotaPage += dir;
+            renderRekapAnggotaTable();
+        }
+
+        function changeLimitRekapAnggota() {
+            var el = document.getElementById('limit-rekap-anggota');
+            rekapAnggotaLimit = el ? parseInt(el.value, 10) || 25 : 25;
+            rekapAnggotaPage = 1;
             renderRekapAnggotaTable();
         }
 
