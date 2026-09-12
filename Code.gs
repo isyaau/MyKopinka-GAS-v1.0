@@ -2398,6 +2398,35 @@ function _storeFromNota(notaRaw) {
   return { key: 'INKA', nama: 'Toko INKA' };
 }
 
+// Total transaksi per (anggota|tahun|bulan) per toko beserta biaya jasa 1,5%
+// (jasa Sutomo/INKA = 1,5% dari nilai transaksi toko tsb di bulan tsb).
+function _buildStoreTransactionMap(dataPiutang) {
+  var map = {};
+  for (var i = 1; i < dataPiutang.length; i++) {
+    var row = dataPiutang[i];
+    var noAng = String(row[6]).replace(/'/g, '').trim().toLowerCase();
+    var tglObj = _parseDate(row[0]);
+    var nilai = Number(row[5]) || 0;
+    if (!noAng || !tglObj || nilai <= 0) continue;
+    var key = noAng + '|' + tglObj.getFullYear() + '|' + tglObj.getMonth();
+    if (!map[key]) map[key] = { SUTOMO: 0, INKA: 0 };
+    map[key][_storeFromNota(String(row[2] || '')).key] += nilai;
+  }
+  var rate = _getBiayaJasaRate();
+  var out = {};
+  for (var k in map) {
+    if (!map.hasOwnProperty(k)) continue;
+    var st = map[k].SUTOMO, si = map[k].INKA;
+    out[k] = {
+      transSutomo: st,
+      transInka: si,
+      jasaSutomo: Math.round(st * rate),
+      jasaInka: Math.round(si * rate)
+    };
+  }
+  return out;
+}
+
 // Normalisasi seluruh baris piutang menjadi event kredit per anggota (urut waktu)
 function _buildPiutangEvents(dataPiutang) {
   var events = [];
@@ -2797,10 +2826,13 @@ function getRekapLimitKreditAdmin(q) {
     var dataUsers = _getCachedUsersData();
     var piutangEvents = _buildPiutangEvents(dataPiutang);
     var payRows = _getCachedPaymentRows();
+    var storeMap = _buildStoreTransactionMap(dataPiutang);
     var globalLimit = _getGlobalLimitCached();
     var aktif = _isLimitKreditAktif();
     var now = new Date();
     var nowM = now.getMonth(), nowY = now.getFullYear();
+    var tPM = nowM - 1; var tPY = nowY;
+    if (tPM < 0) { tPM = 11; tPY--; }
 
     var userMap = {};
     var blockedMap = {};
@@ -2836,6 +2868,13 @@ function getRekapLimitKreditAdmin(q) {
       var led = _buildLedgerMember(uk, piutangEvents, payRows);
       var L = _ambilDataLimitBulan(led, nowY, nowM);
 
+      // Tagihan bulan lalu & bulan ini = transaksi + biaya jasa 1,5%
+      // (jasa Toko Sutomo + jasa Toko INKA).
+      var pj = storeMap[uk + '|' + tPY + '|' + tPM] || { transSutomo: 0, transInka: 0, jasaSutomo: 0, jasaInka: 0 };
+      var cj = storeMap[uk + '|' + nowY + '|' + nowM] || { transSutomo: 0, transInka: 0, jasaSutomo: 0, jasaInka: 0 };
+      var tagihanBulanLalu = L.tagihanBulanLalu + pj.jasaSutomo + pj.jasaInka;
+      var tagihanBulanIni = L.tagihanBulanIni + cj.jasaSutomo + cj.jasaInka;
+
       var outstandingLimit = L.outstandingLimit;
       var limitEfektif = aktif ? Math.max(0, globalLimit - outstandingLimit) : -1;
       var sts;
@@ -2852,10 +2891,14 @@ function getRekapLimitKreditAdmin(q) {
         blokir: m.blokir,
         limitGlobal: globalLimit,
         limitAktif: aktif,
-        tagihanBulanLalu: L.tagihanBulanLalu,
+        tagihanBulanLalu: tagihanBulanLalu,
+        jasaSutomoLalu: pj.jasaSutomo,
+        jasaInkaLalu: pj.jasaInka,
         bayarBulanLalu: L.bayarBulanLalu,
         sisaBelumTerbayar: L.sisaBelumTerbayar,
-        tagihanBulanIni: L.tagihanBulanIni,
+        tagihanBulanIni: tagihanBulanIni,
+        jasaSutomoIni: cj.jasaSutomo,
+        jasaInkaIni: cj.jasaInka,
         bayarBulanIni: L.bayarBulanIni,
         sisaBulanLalu: L.sisaBulanLalu,
         sisaTotal: L.sisaTotal,
@@ -2889,6 +2932,7 @@ function getDetailLimitKreditAnggota(noAnggota) {
     var dataUsers = _getCachedUsersData();
     var piutangEvents = _buildPiutangEvents(dataPiutang);
     var payRows = _getCachedPaymentRows();
+    var storeMap = _buildStoreTransactionMap(dataPiutang);
     var globalLimit = _getGlobalLimitCached();
     var aktif = _isLimitKreditAktif();
 
@@ -2926,7 +2970,12 @@ function getDetailLimitKreditAnggota(noAnggota) {
 
     var nowD = new Date();
     var L = _ambilDataLimitBulan(led, nowD.getFullYear(), nowD.getMonth());
-    var tagihanBulanIni = L.tagihanBulanIni;
+    var tPMd = nowD.getMonth() - 1; var tPYd = nowD.getFullYear();
+    if (tPMd < 0) { tPMd = 11; tPYd--; }
+    var pjd = storeMap[q + '|' + tPYd + '|' + tPMd] || { transSutomo: 0, transInka: 0, jasaSutomo: 0, jasaInka: 0 };
+    var cjd = storeMap[q + '|' + nowD.getFullYear() + '|' + nowD.getMonth()] || { transSutomo: 0, transInka: 0, jasaSutomo: 0, jasaInka: 0 };
+    var tagihanBulanLalu = L.tagihanBulanLalu + pjd.jasaSutomo + pjd.jasaInka;
+    var tagihanBulanIni = L.tagihanBulanIni + cjd.jasaSutomo + cjd.jasaInka;
     var bayarBulanIni = L.bayarBulanIni;
     var sisaBulanLalu = L.sisaBulanLalu;
     var outstandingLimit = L.outstandingLimit;
@@ -2944,10 +2993,18 @@ function getDetailLimitKreditAnggota(noAnggota) {
       limitAktif: aktif,
       bulanBerjalan: nowD.getMonth() + 1,
       tahunBerjalan: nowD.getFullYear(),
-      tagihanBulanLalu: L.tagihanBulanLalu,
+      tagihanBulanLalu: tagihanBulanLalu,
+      transSutomoLalu: pjd.transSutomo,
+      transInkaLalu: pjd.transInka,
+      jasaSutomoLalu: pjd.jasaSutomo,
+      jasaInkaLalu: pjd.jasaInka,
       bayarBulanLalu: L.bayarBulanLalu,
       sisaBelumTerbayar: L.sisaBelumTerbayar,
       tagihanBulanIni: tagihanBulanIni,
+      transSutomoIni: cjd.transSutomo,
+      transInkaIni: cjd.transInka,
+      jasaSutomoIni: cjd.jasaSutomo,
+      jasaInkaIni: cjd.jasaInka,
       bayarBulanIni: bayarBulanIni,
       sisaBulanLalu: sisaBulanLalu,
       outstandingLimit: outstandingLimit,

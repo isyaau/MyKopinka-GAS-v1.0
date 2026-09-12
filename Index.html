@@ -3407,7 +3407,8 @@
                     class="bi bi-speedometer2" style="color:#16a085;"></i> Monitoring Limit Kredit & Tagihan</h3>
             <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Yang mengurangi <b>limit bulan berjalan</b> hanya <b>Sisa Belum Terbayar</b>
                 (utang sebelum bulan lalu, mis. Juli). <b>Tagihan Bulan Lalu</b> (mis. Agustus) TIDAK mengurangi limit bulan
-                berjalan. Pembayaran diprioritaskan melunasi sisa belum terbayar dahulu, baru tagihan bulan lalu.</p>
+                berjalan. Pembayaran diprioritaskan melunasi sisa belum terbayar dahulu, baru tagihan bulan lalu.
+                <b>Tagihan Bulan Lalu &amp; Tagihan Bulan Ini sudah termasuk biaya jasa 1,5%</b> (Jasa Toko Sutomo + Jasa Toko INKA).</p>
 
             <div class="admin-card-container">
                 <div class="admin-card ac-blue">
@@ -3463,8 +3464,8 @@
                             <th>Nama</th>
                             <th>Kelompok</th>
                             <th class="text-right" id="th-sisa-belum-terbayar">Sisa Belum Terbayar</th>
-                            <th class="text-right" id="th-tagihan-bulan-lalu">Tagihan Bulan Lalu</th>
-                            <th class="text-right" id="th-tagihan-bulan-ini">Tagihan Bulan Ini</th>
+                            <th class="text-right" id="th-tagihan-bulan-lalu" title="Sudah termasuk biaya jasa 1,5% (Toko Sutomo + Toko INKA)">Tagihan Bulan Lalu</th>
+                            <th class="text-right" id="th-tagihan-bulan-ini" title="Sudah termasuk biaya jasa 1,5% (Toko Sutomo + Toko INKA)">Tagihan Bulan Ini</th>
                             <th class="text-right" id="th-bayar-bulan-ini">Bayar Bulan Ini</th>
                             <th class="text-right">Sisa Tagihan Total</th>
                             <th class="text-right">Limit Efektif</th>
@@ -9178,10 +9179,11 @@
                     '<div style="background:#fffaf0; border:1px solid #feebc8; border-radius:12px; padding:12px;">' +
                     '<div style="font-size:10px; font-weight:700; color:#975a16; text-transform:uppercase;">Tagihan Bulan Lalu (' + lblBlnLalu + ')</div>' +
                     '<div style="font-size:16px; font-weight:900; color:#744210; margin-top:4px;">' + rp(res.tagihanBulanLalu) + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Tidak mengurangi limit bulan berjalan</div></div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + rp(res.transSutomoLalu) + ' + jasa Sutomo ' + rp(res.jasaSutomoLalu) + ' + ' + rp(res.transInkaLalu) + ' + jasa INKA ' + rp(res.jasaInkaLalu) + ' (sudah termasuk jasa 1,5%)</div></div>' +
                     '<div style="background:#ebf8ff; border:1px solid #bae6fd; border-radius:12px; padding:12px;">' +
                     '<div style="font-size:10px; font-weight:700; color:#0369a1; text-transform:uppercase;">Tagihan Bulan Ini (' + lblBlnIni + ')</div>' +
-                    '<div style="font-size:16px; font-weight:900; color:#0c4a6e; margin-top:4px;">' + rp(res.tagihanBulanIni) + '</div></div>' +
+                    '<div style="font-size:16px; font-weight:900; color:#0c4a6e; margin-top:4px;">' + rp(res.tagihanBulanIni) + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + rp(res.transSutomoIni) + ' + jasa Sutomo ' + rp(res.jasaSutomoIni) + ' + ' + rp(res.transInkaIni) + ' + jasa INKA ' + rp(res.jasaInkaIni) + ' (sudah termasuk jasa 1,5%)</div></div>' +
                     '<div style="background:#f0fff4; border:1px solid #c6f6d5; border-radius:12px; padding:12px;">' +
                     '<div style="font-size:10px; font-weight:700; color:#276749; text-transform:uppercase;">Limit Global</div>' +
                     '<div style="font-size:16px; font-weight:900; color:#22543d; margin-top:4px;">' + (res.limitAktif ? rp(res.limitGlobal) : 'Nonaktif') + '</div></div>' +
