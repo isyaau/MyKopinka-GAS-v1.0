@@ -9212,12 +9212,16 @@
                     '</div>';
 
                 var rowsHtml = '';
-                (res.months || []).forEach(function (r, idx) {
-                    var lbl = (namaBulan[r.m] || r.m) + ' ' + r.y;
+                var rowNo = 0;
+                (res.months || []).forEach(function (r) {
+                    var kosong = (Number(r.tagihan) <= 0 && Number(r.bayar) <= 0 && Number(r.sisaAwal) <= 0 && Number(r.sisaAkhir) <= 0);
+                    if (kosong) return;
+                    var lbl = (namaBulan[Number(r.m) + 1] || (Number(r.m) + 1)) + ' ' + r.y;
                     var isCur = !!r.isCurrent;
                     var limEff = isCur ? effNow : r.limitEfektif;
                     var limNol = isCur ? (effNow <= 0) : r.limitNol;
-                    var bg = isCur ? 'background:#eafaf7;' : (idx % 2 ? '' : 'background:#f7fafb;');
+                    var bg = isCur ? 'background:#eafaf7;' : (rowNo % 2 ? '' : 'background:#f7fafb;');
+                    rowNo++;
                     rowsHtml += '<tr style="' + bg + '">' +
                         '<td style="padding:8px 10px;white-space:nowrap;font-weight:700;font-size:12px;color:#2d3748;">' + lbl +
                         (isCur ? ' <span style="background:#16a085;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;">SEKARANG</span>' : '') + '</td>' +
@@ -9230,7 +9234,7 @@
                             : '<span style="color:#27ae60;font-size:13px;" title="Kredit terbuka"><i class="bi bi-check-circle-fill"></i></span>') + '</td>' +
                         '</tr>';
                 });
-                if (!res.months || res.months.length === 0) {
+                if (rowsHtml === '') {
                     rowsHtml = '<tr><td colspan="6" style="text-align:center; padding:18px; color:#95a5a6;">Belum ada aktivitas kredit toko / pembayaran untuk anggota ini.</td></tr>';
                 }
 
