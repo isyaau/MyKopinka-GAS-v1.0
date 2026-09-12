@@ -3463,11 +3463,11 @@
                             <th>No Anggota</th>
                             <th>Nama</th>
                             <th>Kelompok</th>
-                            <th class="text-right">Sisa Tagihan Bulan Lalu</th>
-                            <th class="text-right">Tagihan Bulan Ini</th>
-                            <th class="text-right">Bayar Bulan Ini</th>
+                            <th class="text-right" id="th-tagihan-bulan-lalu">Tagihan Bulan Lalu</th>
+                            <th class="text-right" id="th-tagihan-bulan-ini">Tagihan Bulan Ini</th>
+                            <th class="text-right" id="th-bayar-bulan-ini">Bayar Bulan Ini</th>
+                            <th class="text-right" id="th-sisa-belum-terbayar">Sisa Belum Terbayar</th>
                             <th class="text-right">Sisa Tagihan Total</th>
-                            <th class="text-right">Limit Global</th>
                             <th class="text-right">Limit Efektif</th>
                             <th style="text-align:center;">Status</th>
                             <th style="text-align:center;">Aksi</th>
@@ -8997,13 +8997,16 @@
         var filteredLimitAdmin = [];
         var limitAdminPage = 1;
         var limitAdminLimit = 25;
+        var limitAdminBulanIni = 1;
+        var limitAdminBulanLalu = 12;
+        var limitAdminBulanSebelum = 11;
 
         function loadRekapLimitAdmin() {
             var tb = document.querySelector('#tabel-limit-admin tbody');
             if (tb) {
                 var skel = '';
                 for (var si = 0; si < 5; si++) {
-                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
+                    skel += '<tr class="skeleton-row"><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar medium"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar short"></div></td><td><div class="skeleton-bar xshort"></div></td><td><div class="skeleton-bar xshort"></div></td></tr>';
                 }
                 tb.innerHTML = skel;
             }
@@ -9015,6 +9018,16 @@
             google.script.run.withSuccessHandler(function (res) {
                 if (res.status === 'sukses') {
                     rawLimitAdmin = res.data || [];
+                    var mCur = Number(res.bulanBerjalan) || 1;
+                    var mPrev = mCur - 1; if (mPrev < 1) mPrev = 12;
+                    var mPrev2 = mCur - 2; if (mPrev2 < 1) mPrev2 += 12;
+                    limitAdminBulanIni = mCur;
+                    limitAdminBulanLalu = mPrev;
+                    limitAdminBulanSebelum = mPrev2;
+                    safeSetText('th-tagihan-bulan-lalu', 'Tagihan Bulan Lalu (' + (namaBulan[mPrev] || mPrev) + ')');
+                    safeSetText('th-tagihan-bulan-ini', 'Tagihan Bulan Ini (' + (namaBulan[mCur] || mCur) + ')');
+                    safeSetText('th-bayar-bulan-ini', 'Bayar Bulan Ini (' + (namaBulan[mCur] || mCur) + ')');
+                    safeSetText('th-sisa-belum-terbayar', 'Sisa Belum Terbayar (' + (namaBulan[mPrev2] || mPrev2) + ')');
                     safeSetText('stat-limit-global', res.limitAktif ? 'Rp ' + Number(res.limitGlobal || 0).toLocaleString('id-ID') : 'Limit Nonaktif');
                     safeSetText('stat-limit-bulan-berjalan', (namaBulan[res.bulanBerjalan] || res.bulanBerjalan) + ' ' + res.tahunBerjalan);
                     safeSetText('stat-limit-jml-anggota', rawLimitAdmin.length.toLocaleString('id-ID'));
@@ -9078,16 +9091,17 @@
                 var html = '';
                 slice.forEach(function (a, idx) {
                     var nomor = start + idx + 1;
+                    var sisaBelum = Number(a.sisaBelumTerbayar) || 0;
                     html += '<tr>' +
                         '<td class="text-center">' + nomor + '</td>' +
                         '<td><b>' + (a.noAnggota || '-') + '</b></td>' +
                         '<td>' + (a.nama || '-') + '</td>' +
                         '<td>' + (a.kelompok || '-') + '</td>' +
-                        '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.sisaBulanLalu) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.tagihanBulanLalu) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><b>Rp ' + (Number(a.tagihanBulanIni) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right" style="color:#27ae60;"><b>Rp ' + (Number(a.bayarBulanIni) || 0).toLocaleString('id-ID') + '</b></td>' +
+                        '<td class="text-right"><b style="color:' + (sisaBelum > 0 ? '#c0392b' : '#7f8c8d') + ';">Rp ' + sisaBelum.toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><b>Rp ' + (Number(a.sisaTotal) || 0).toLocaleString('id-ID') + '</b></td>' +
-                        '<td class="text-right">' + (a.limitAktif ? 'Rp ' + (Number(a.limitGlobal) || 0).toLocaleString('id-ID') : '-') + '</td>' +
                         '<td class="text-right"><span style="font-weight:800; color:' + (a.limitEfektif <= 0 ? '#e74c3c' : '#16a085') + ';">' + (a.limitAktif ? 'Rp ' + (Number(a.limitEfektif) || 0).toLocaleString('id-ID') : '-') + '</span></td>' +
                         '<td class="text-center">' + badgeStatusLimit(a.status) + '</td>' +
                         '<td class="text-center"><button class="btn-icon-sm" title="Detail Limit" onclick="lihatDetailLimitAnggota(\'' + String(a.noAnggota || '').replace(/'/g, '') + '\')"><i class="bi bi-eye"></i></button></td>' +
@@ -9122,12 +9136,12 @@
             d.push(['MONITORING LIMIT KREDIT & TAGIHAN ANGGOTA']);
             d.push(['Bulan Berjalan: ' + blnNama + ' ' + now.getFullYear()]);
             d.push([]);
-            d.push(['No', 'No Anggota', 'Nama', 'Kelompok', 'Sisa Tagihan Bulan Lalu', 'Tagihan Bulan Ini', 'Bayar Bulan Ini', 'Sisa Tagihan Total', 'Limit Global', 'Limit Efektif', 'Status']);
+            d.push(['No', 'No Anggota', 'Nama', 'Kelompok', 'Tagihan Bulan Lalu (' + (namaBulan[limitAdminBulanLalu] || limitAdminBulanLalu) + ')', 'Tagihan Bulan Ini (' + (namaBulan[limitAdminBulanIni] || limitAdminBulanIni) + ')', 'Bayar Bulan Ini (' + (namaBulan[limitAdminBulanIni] || limitAdminBulanIni) + ')', 'Sisa Belum Terbayar (' + (namaBulan[limitAdminBulanSebelum] || limitAdminBulanSebelum) + ')', 'Sisa Tagihan Total', 'Limit Efektif', 'Status']);
             filteredLimitAdmin.forEach(function (a, idx) {
-                d.push([idx + 1, a.noAnggota, a.nama, a.kelompok, Number(a.sisaBulanLalu) || 0, Number(a.tagihanBulanIni) || 0, Number(a.bayarBulanIni) || 0, Number(a.sisaTotal) || 0, a.limitAktif ? Number(a.limitGlobal) || 0 : '-', a.limitAktif ? Number(a.limitEfektif) || 0 : '-', a.status]);
+                d.push([idx + 1, a.noAnggota, a.nama, a.kelompok, Number(a.tagihanBulanLalu) || 0, Number(a.tagihanBulanIni) || 0, Number(a.bayarBulanIni) || 0, Number(a.sisaBelumTerbayar) || 0, Number(a.sisaTotal) || 0, a.limitAktif ? Number(a.limitEfektif) || 0 : '-', a.status]);
             });
             var ws = XLSX.utils.aoa_to_sheet(d);
-            ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 25 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 14 }, { wch: 12 }];
+            ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 25 }, { wch: 16 }, { wch: 24 }, { wch: 20 }, { wch: 18 }, { wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 12 }];
             var wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Monitoring Limit');
             XLSX.writeFile(wb, 'Monitoring_Limit_Kredit_Anggota.xlsx');

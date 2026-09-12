@@ -2817,6 +2817,22 @@ function getRekapLimitKreditAdmin(q) {
         sisaTotal = sisaBulanLalu;
       }
 
+      // Tagihan bulan lalu (sebelum bulan berjalan) + sisa belum terbayar
+      // pada bulan sebelum bulan lalu (2 bulan ke belakang). Contoh: bulan
+      // berjalan September -> tagihan bulan lalu = Agustus, sisa belum
+      // terbayar = akhir Juli (0 jika tidak ada) yang ikut mengurangi limit
+      // efektif bulan September.
+      var targetPrevY = nowY, targetPrevM = nowM - 1;
+      if (targetPrevM < 0) { targetPrevM = 11; targetPrevY--; }
+      var targetPrev2Y = nowY, targetPrev2M = nowM - 2;
+      if (targetPrev2M < 0) { targetPrev2M += 12; targetPrev2Y--; }
+      var tagihanBulanLalu = 0, sisaBelumTerbayar = 0;
+      for (var mm = 0; mm < led.months.length; mm++) {
+        var rr = led.months[mm];
+        if (rr.y === targetPrevY && rr.m === targetPrevM) tagihanBulanLalu = rr.tagihan;
+        if (rr.y === targetPrev2Y && rr.m === targetPrev2M) sisaBelumTerbayar = rr.sisaAkhir;
+      }
+
       var outstandingLimit = Math.max(0, sisaBulanLalu - bayarBulanIni);
       var limitEfektif = aktif ? Math.max(0, globalLimit - outstandingLimit) : -1;
       var sts;
@@ -2833,6 +2849,8 @@ function getRekapLimitKreditAdmin(q) {
         blokir: m.blokir,
         limitGlobal: globalLimit,
         limitAktif: aktif,
+        tagihanBulanLalu: tagihanBulanLalu,
+        sisaBelumTerbayar: sisaBelumTerbayar,
         tagihanBulanIni: tagihanBulanIni,
         bayarBulanIni: bayarBulanIni,
         sisaBulanLalu: sisaBulanLalu,
