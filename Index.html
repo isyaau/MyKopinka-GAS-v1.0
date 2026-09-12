@@ -9196,7 +9196,7 @@
                     '</div>' +
                     '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:12px 14px;">' +
                     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">' +
-                    '<div style="font-size:12px;color:#718096;line-height:1.5;">Sisa Belum Terbayar<br><b style="color:' + (Number(res.sisaBelumTerbayar) > 0 ? '#c0392b' : '#7f8c8d') + ';font-size:15px;">' + rp(res.sisaBelumTerbayar) + '</b><br><span style="font-size:10px;color:#a0aec0;">Pengurang limit · ' + lblSebelum + '</span></div>' +
+                    '<div style="font-size:12px;color:#718096;line-height:1.5;">Sisa Belum Terbayar<br><b style="color:' + (Number(res.sisaBelumTerbayar) > 0 ? '#c0392b' : '#7f8c8d') + ';font-size:15px;">' + rp(res.sisaBelumTerbayar) + '</b><br><span style="font-size:10px;color:#a0aec0;">Sisa tagihan ' + lblSebelum + ' yang belum terbayar - pengurang limit bulan ini</span></div>' +
                     '<div style="font-size:12px;color:#718096;line-height:1.5;">Sisa Tagihan Total<br><b style="color:#2d3748;font-size:15px;">' + rp(res.sisaTotal) + '</b><br><span style="font-size:10px;color:#a0aec0;">Akumulasi semua bulan</span></div>' +
                     '</div>' +
                     '<div style="border-top:1px dashed #f0e0c0;padding:9px 0 7px;">' +
@@ -9207,7 +9207,10 @@
                     '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#0369a1;"><span><b>Tagihan Bulan Ini</b> <span style="color:#a0aec0;">(' + lblIni + ')</span></span><b style="font-size:14px;color:#0c4a6e;">' + rp(res.tagihanBulanIni) + '</b></div>' +
                     '<div style="font-size:10px;color:#a0aec0;margin-top:2px;">' + rincianJasa(res.transSutomoIni, res.jasaSutomoIni, res.transInkaIni, res.jasaInkaIni) + '</div>' +
                     '</div>' +
-                    '<div style="padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#2e7d32;"><span><b>Bayar Bulan Ini</b> <span style="color:#a0aec0;">(' + lblIni + ')</span></span><b style="font-size:14px;color:#27ae60;">' + rp(res.bayarBulanIni) + '</b></div>' +
+                    '<div style="padding-top:8px;border-top:1px dashed #e2e8f0;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:#2e7d32;"><span><b>Bayar Bulan Ini</b> <span style="color:#a0aec0;">(' + lblIni + ')</span></span><b style="font-size:14px;color:#27ae60;">' + rp(res.bayarBulanIni) + '</b></div>' +
+                    '<div style="font-size:10px;color:#a0aec0;margin-top:2px;">Pembayaran bulan ini otomatis mengurangi <b>Sisa Belum Terbayar (' + lblSebelum + ')</b> terlebih dahulu, baru tagihan bulan lalu (' + lblLalu + ').</div>' +
+                    '</div>' +
                     '</div>' +
                     '</div>';
 
