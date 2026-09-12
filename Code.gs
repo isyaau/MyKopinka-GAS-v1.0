@@ -286,23 +286,14 @@ function _getBatasKreditAnggota(noAnggota) {
   var global = _getGlobalLimitCached();
   var outstanding = 0;
   var now = new Date();
-  var curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   var q = String(noAnggota).trim().toLowerCase();
   try {
-    var memberBayar = _getCachedMemberPaymentMap();
-    var totalDibayar = memberBayar[q] || 0;
-    var totalPiutang = 0;
-    var data = _getCachedPiutangData();
-    for (var i = 1; i < data.length; i++) {
-      var nM = String(data[i][6]).replace(/'/g, '').trim().toLowerCase();
-      if (nM !== q) continue;
-      var tgl = _parseDate(data[i][0]);
-      if (!tgl) continue;
-      if (tgl.getTime() >= curMonthStart.getTime()) continue;
-      totalPiutang += Number(data[i][5]) || 0;
-    }
-    outstanding = totalPiutang - totalDibayar;
-    if (outstanding < 0) outstanding = 0;
+    var dataPiutang = _getCachedPiutangData();
+    var piutangEvents = _buildPiutangEvents(dataPiutang);
+    var payRows = _getCachedPaymentRows();
+    var led = _buildLedgerMember(q, piutangEvents, payRows);
+    var L = _ambilDataLimitBulan(led, now.getFullYear(), now.getMonth());
+    outstanding = L.outstandingLimit;
   } catch (e) {}
   if (!_isLimitKreditAktif()) {
     return { global: -1, outstanding: outstanding, effective: -1 };
@@ -316,39 +307,38 @@ function _getBatasKreditAnggota(noAnggota) {
 function _getBatasKreditAllMembers(dataPiutangOpt) {
   var global = _getGlobalLimitCached();
   var now = new Date();
-  var curMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  var nowY = now.getFullYear(), nowM = now.getMonth();
+  var aktif = _isLimitKreditAktif();
 
+  var data = dataPiutangOpt || _getCachedPiutangData();
   var piutangLalu = {};
   try {
-    var data = dataPiutangOpt || _getCachedPiutangData();
     for (var i = 1; i < data.length; i++) {
       var q = String(data[i][6]).replace(/'/g, '').trim().toLowerCase();
       if (!q) continue;
       var tgl = _parseDate(data[i][0]);
       if (!tgl) continue;
-      if (tgl.getTime() < curMonthStart.getTime()) {
+      if (tgl.getTime() < new Date(nowY, nowM - 1, 1).getTime()) {
         if (!piutangLalu[q]) piutangLalu[q] = 0;
         piutangLalu[q] += Number(data[i][5]) || 0;
       }
     }
   } catch (e) {}
 
-  var memberBayar = _getCachedMemberPaymentMap();
-  if (!_isLimitKreditAktif()) {
-    var outLimits = {};
-    for (var kk in piutangLalu) {
-      var totPay = memberBayar[kk] || 0;
-      var out = piutangLalu[kk] - totPay;
-      if (out < 0) out = 0;
-      outLimits[kk] = { global: -1, outstanding: out, effective: -1 };
-    }
-    return outLimits;
-  }
+  var piutangEvents = null;
+  var payRows = null;
   var limits = {};
   for (var k in piutangLalu) {
-    var totalDibayar = memberBayar[k] || 0;
-    var outstanding = piutangLalu[k] - totalDibayar;
-    if (outstanding < 0) outstanding = 0;
+    if (!piutangLalu[k]) {
+      limits[k] = { global: aktif ? global : -1, outstanding: 0, effective: aktif ? global : -1 };
+      continue;
+    }
+    if (!piutangEvents) piutangEvents = _buildPiutangEvents(data);
+    if (!payRows) payRows = _getCachedPaymentRows();
+    var led = _buildLedgerMember(k, piutangEvents, payRows);
+    var L = _ambilDataLimitBulan(led, nowY, nowM);
+    var outstanding = L.outstandingLimit;
+    if (!aktif) { limits[k] = { global: -1, outstanding: outstanding, effective: -1 }; continue; }
     var effective = global - outstanding;
     if (effective < 0) effective = 0;
     limits[k] = { global: global, outstanding: outstanding, effective: effective };
@@ -2756,9 +2746,51 @@ function _buildLedgerMember(noAngLc, piutangEvents, payRows) {
   return { months: months };
 }
 
+// Ekstrak ringkasan limit & tagihan untuk bulan berjalan dari ledger bulanan.
+// Aturan pembayaran: diprioritaskan melunasi SISA BELUM TERBAYAR (utang paling
+// lama, contoh Juli) terlebih dahulu, baru TAGIHAN BULAN LALU (contoh Agustus).
+// Yang mempengaruhi limit bulan berjalan HANYA sisa belum terbayar, sehingga:
+//   outstandingLimit = sisaBelumTerbayar - bayarBulanLalu - bayarBulanIni (floor 0)
+function _ambilDataLimitBulan(led, nowY, nowM) {
+  var tPY = nowY, tPM = nowM - 1;
+  if (tPM < 0) { tPM = 11; tPY--; }
+  var t2Y = nowY, t2M = nowM - 2;
+  if (t2M < 0) { t2M += 12; t2Y--; }
+
+  var tagihanBulanLalu = 0, bayarBulanLalu = 0, sisaBelumTerbayar = 0;
+  var tagihanBulanIni = 0, bayarBulanIni = 0, sisaBulanLalu = 0, sisaTotal = 0;
+  var cur = null;
+  for (var i = 0; i < led.months.length; i++) {
+    var r = led.months[i];
+    if (r.isCurrent) cur = r;
+    if (r.y === tPY && r.m === tPM) { tagihanBulanLalu = r.tagihan; bayarBulanLalu = r.bayar; }
+    if (r.y === t2Y && r.m === t2M) sisaBelumTerbayar = r.sisaAkhir;
+  }
+  if (cur) {
+    tagihanBulanIni = cur.tagihan;
+    bayarBulanIni = cur.bayar;
+    sisaBulanLalu = cur.sisaAwal;
+    sisaTotal = cur.sisaAkhir;
+  } else if (led.months.length > 0) {
+    sisaBulanLalu = led.months[led.months.length - 1].sisaAkhir;
+    sisaTotal = sisaBulanLalu;
+  }
+  return {
+    tagihanBulanLalu: tagihanBulanLalu,
+    bayarBulanLalu: bayarBulanLalu,
+    sisaBelumTerbayar: sisaBelumTerbayar,
+    tagihanBulanIni: tagihanBulanIni,
+    bayarBulanIni: bayarBulanIni,
+    sisaBulanLalu: sisaBulanLalu,
+    sisaTotal: sisaTotal,
+    outstandingLimit: Math.max(0, sisaBelumTerbayar - bayarBulanLalu - bayarBulanIni)
+  };
+}
+
 // Ringkasan limit & tagihan SEMUA anggota untuk bulan berjalan.
-// outstandingLimit = sisa tagihan bulan lalu yang dibawa ke bulan ini
-// (setelah dipotong pembayaran bulan ini) -> pengurang limit bulan berjalan.
+// outstandingLimit = SISA BELUM TERBAYAR (utang sebelum bulan lalu, mis. Juli)
+// dikurangi pembayaran bulan lalu & bulan berjalan (FIFO). Bukan tagihan
+// bulan lalu. Sisa belum terbayar inilah pengurang limit bulan berjalan.
 function getRekapLimitKreditAdmin(q) {
   try {
     var dataPiutang = _getCachedPiutangData();
@@ -2802,38 +2834,9 @@ function getRekapLimitKreditAdmin(q) {
       if (!userMap.hasOwnProperty(uk)) continue;
       var m = userMap[uk];
       var led = _buildLedgerMember(uk, piutangEvents, payRows);
-      var cur = null;
-      for (var mi = 0; mi < led.months.length; mi++) {
-        if (led.months[mi].isCurrent) { cur = led.months[mi]; break; }
-      }
-      var tagihanBulanIni = 0, bayarBulanIni = 0, sisaBulanLalu = 0, sisaTotal = 0;
-      if (cur) {
-        tagihanBulanIni = cur.tagihan;
-        bayarBulanIni = cur.bayar;
-        sisaBulanLalu = cur.sisaAwal;
-        sisaTotal = cur.sisaAkhir;
-      } else if (led.months.length > 0) {
-        sisaBulanLalu = led.months[led.months.length - 1].sisaAkhir;
-        sisaTotal = sisaBulanLalu;
-      }
+      var L = _ambilDataLimitBulan(led, nowY, nowM);
 
-      // Tagihan bulan lalu (sebelum bulan berjalan) + sisa belum terbayar
-      // pada bulan sebelum bulan lalu (2 bulan ke belakang). Contoh: bulan
-      // berjalan September -> tagihan bulan lalu = Agustus, sisa belum
-      // terbayar = akhir Juli (0 jika tidak ada) yang ikut mengurangi limit
-      // efektif bulan September.
-      var targetPrevY = nowY, targetPrevM = nowM - 1;
-      if (targetPrevM < 0) { targetPrevM = 11; targetPrevY--; }
-      var targetPrev2Y = nowY, targetPrev2M = nowM - 2;
-      if (targetPrev2M < 0) { targetPrev2M += 12; targetPrev2Y--; }
-      var tagihanBulanLalu = 0, sisaBelumTerbayar = 0;
-      for (var mm = 0; mm < led.months.length; mm++) {
-        var rr = led.months[mm];
-        if (rr.y === targetPrevY && rr.m === targetPrevM) tagihanBulanLalu = rr.tagihan;
-        if (rr.y === targetPrev2Y && rr.m === targetPrev2M) sisaBelumTerbayar = rr.sisaAkhir;
-      }
-
-      var outstandingLimit = Math.max(0, sisaBulanLalu - bayarBulanIni);
+      var outstandingLimit = L.outstandingLimit;
       var limitEfektif = aktif ? Math.max(0, globalLimit - outstandingLimit) : -1;
       var sts;
       if (m.blokir) sts = 'Blokir';
@@ -2849,12 +2852,13 @@ function getRekapLimitKreditAdmin(q) {
         blokir: m.blokir,
         limitGlobal: globalLimit,
         limitAktif: aktif,
-        tagihanBulanLalu: tagihanBulanLalu,
-        sisaBelumTerbayar: sisaBelumTerbayar,
-        tagihanBulanIni: tagihanBulanIni,
-        bayarBulanIni: bayarBulanIni,
-        sisaBulanLalu: sisaBulanLalu,
-        sisaTotal: sisaTotal,
+        tagihanBulanLalu: L.tagihanBulanLalu,
+        bayarBulanLalu: L.bayarBulanLalu,
+        sisaBelumTerbayar: L.sisaBelumTerbayar,
+        tagihanBulanIni: L.tagihanBulanIni,
+        bayarBulanIni: L.bayarBulanIni,
+        sisaBulanLalu: L.sisaBulanLalu,
+        sisaTotal: L.sisaTotal,
         outstandingLimit: outstandingLimit,
         limitEfektif: limitEfektif,
         status: sts
@@ -2919,12 +2923,15 @@ function getDetailLimitKreditAnggota(noAnggota) {
 
     var cur = null;
     for (var ci = 0; ci < months.length; ci++) if (months[ci].isCurrent) cur = months[ci];
-    var tagihanBulanIni = cur ? cur.tagihan : 0;
-    var bayarBulanIni = cur ? cur.bayar : 0;
-    var sisaBulanLalu = cur ? cur.sisaAwal : (led.months.length ? led.months[led.months.length - 1].sisaAkhir : 0);
-    var outstandingLimit = Math.max(0, sisaBulanLalu - bayarBulanIni);
+
+    var nowD = new Date();
+    var L = _ambilDataLimitBulan(led, nowD.getFullYear(), nowD.getMonth());
+    var tagihanBulanIni = L.tagihanBulanIni;
+    var bayarBulanIni = L.bayarBulanIni;
+    var sisaBulanLalu = L.sisaBulanLalu;
+    var outstandingLimit = L.outstandingLimit;
     var limitEfektifNow = aktif ? Math.max(0, globalLimit - outstandingLimit) : -1;
-    var sisaTotal = cur ? cur.sisaAkhir : sisaBulanLalu;
+    var sisaTotal = L.sisaTotal;
 
     return {
       status: 'sukses',
@@ -2935,8 +2942,11 @@ function getDetailLimitKreditAnggota(noAnggota) {
       blokir: blokir,
       limitGlobal: globalLimit,
       limitAktif: aktif,
-      bulanBerjalan: (new Date()).getMonth() + 1,
-      tahunBerjalan: (new Date()).getFullYear(),
+      bulanBerjalan: nowD.getMonth() + 1,
+      tahunBerjalan: nowD.getFullYear(),
+      tagihanBulanLalu: L.tagihanBulanLalu,
+      bayarBulanLalu: L.bayarBulanLalu,
+      sisaBelumTerbayar: L.sisaBelumTerbayar,
       tagihanBulanIni: tagihanBulanIni,
       bayarBulanIni: bayarBulanIni,
       sisaBulanLalu: sisaBulanLalu,

@@ -3405,10 +3405,9 @@
         <div id="view-admin-monitoring-limit" class="hidden">
             <h3 style="text-align:left; color:#2c3e50; border-bottom: 2px solid #16a085; padding-bottom:10px;"><i
                     class="bi bi-speedometer2" style="color:#16a085;"></i> Monitoring Limit Kredit & Tagihan</h3>
-            <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Sisa tagihan bulan lalu (yang belum lunas) otomatis
-                terakumulasi dan mengurangi <b>limit bulan berjalan</b>. Jika sisa tagihan bulan lalu sudah mencapai
-                limit global, limit bulan berjalan menjadi <b>Rp 0</b> dan kredit toko <b>diblokir</b> sampai tagihan
-                dilunasi.</p>
+            <p style="font-size:13px; color:#7f8c8d; margin-top:0;">Yang mengurangi <b>limit bulan berjalan</b> hanya <b>Sisa Belum Terbayar</b>
+                (utang sebelum bulan lalu, mis. Juli). <b>Tagihan Bulan Lalu</b> (mis. Agustus) TIDAK mengurangi limit bulan
+                berjalan. Pembayaran diprioritaskan melunasi sisa belum terbayar dahulu, baru tagihan bulan lalu.</p>
 
             <div class="admin-card-container">
                 <div class="admin-card ac-blue">
@@ -3463,10 +3462,10 @@
                             <th>No Anggota</th>
                             <th>Nama</th>
                             <th>Kelompok</th>
+                            <th class="text-right" id="th-sisa-belum-terbayar">Sisa Belum Terbayar</th>
                             <th class="text-right" id="th-tagihan-bulan-lalu">Tagihan Bulan Lalu</th>
                             <th class="text-right" id="th-tagihan-bulan-ini">Tagihan Bulan Ini</th>
                             <th class="text-right" id="th-bayar-bulan-ini">Bayar Bulan Ini</th>
-                            <th class="text-right" id="th-sisa-belum-terbayar">Sisa Belum Terbayar</th>
                             <th class="text-right">Sisa Tagihan Total</th>
                             <th class="text-right">Limit Efektif</th>
                             <th style="text-align:center;">Status</th>
@@ -9097,10 +9096,10 @@
                         '<td><b>' + (a.noAnggota || '-') + '</b></td>' +
                         '<td>' + (a.nama || '-') + '</td>' +
                         '<td>' + (a.kelompok || '-') + '</td>' +
+                        '<td class="text-right"><b style="color:' + (sisaBelum > 0 ? '#c0392b' : '#7f8c8d') + ';">Rp ' + sisaBelum.toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right" style="color:#c0392b;"><b>Rp ' + (Number(a.tagihanBulanLalu) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><b>Rp ' + (Number(a.tagihanBulanIni) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right" style="color:#27ae60;"><b>Rp ' + (Number(a.bayarBulanIni) || 0).toLocaleString('id-ID') + '</b></td>' +
-                        '<td class="text-right"><b style="color:' + (sisaBelum > 0 ? '#c0392b' : '#7f8c8d') + ';">Rp ' + sisaBelum.toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><b>Rp ' + (Number(a.sisaTotal) || 0).toLocaleString('id-ID') + '</b></td>' +
                         '<td class="text-right"><span style="font-weight:800; color:' + (a.limitEfektif <= 0 ? '#e74c3c' : '#16a085') + ';">' + (a.limitAktif ? 'Rp ' + (Number(a.limitEfektif) || 0).toLocaleString('id-ID') : '-') + '</span></td>' +
                         '<td class="text-center">' + badgeStatusLimit(a.status) + '</td>' +
@@ -9136,9 +9135,9 @@
             d.push(['MONITORING LIMIT KREDIT & TAGIHAN ANGGOTA']);
             d.push(['Bulan Berjalan: ' + blnNama + ' ' + now.getFullYear()]);
             d.push([]);
-            d.push(['No', 'No Anggota', 'Nama', 'Kelompok', 'Tagihan Bulan Lalu (' + (namaBulan[limitAdminBulanLalu] || limitAdminBulanLalu) + ')', 'Tagihan Bulan Ini (' + (namaBulan[limitAdminBulanIni] || limitAdminBulanIni) + ')', 'Bayar Bulan Ini (' + (namaBulan[limitAdminBulanIni] || limitAdminBulanIni) + ')', 'Sisa Belum Terbayar (' + (namaBulan[limitAdminBulanSebelum] || limitAdminBulanSebelum) + ')', 'Sisa Tagihan Total', 'Limit Efektif', 'Status']);
+            d.push(['No', 'No Anggota', 'Nama', 'Kelompok', 'Sisa Belum Terbayar (' + (namaBulan[limitAdminBulanSebelum] || limitAdminBulanSebelum) + ')', 'Tagihan Bulan Lalu (' + (namaBulan[limitAdminBulanLalu] || limitAdminBulanLalu) + ')', 'Tagihan Bulan Ini (' + (namaBulan[limitAdminBulanIni] || limitAdminBulanIni) + ')', 'Bayar Bulan Ini (' + (namaBulan[limitAdminBulanIni] || limitAdminBulanIni) + ')', 'Sisa Tagihan Total', 'Limit Efektif', 'Status']);
             filteredLimitAdmin.forEach(function (a, idx) {
-                d.push([idx + 1, a.noAnggota, a.nama, a.kelompok, Number(a.tagihanBulanLalu) || 0, Number(a.tagihanBulanIni) || 0, Number(a.bayarBulanIni) || 0, Number(a.sisaBelumTerbayar) || 0, Number(a.sisaTotal) || 0, a.limitAktif ? Number(a.limitEfektif) || 0 : '-', a.status]);
+                d.push([idx + 1, a.noAnggota, a.nama, a.kelompok, Number(a.sisaBelumTerbayar) || 0, Number(a.tagihanBulanLalu) || 0, Number(a.tagihanBulanIni) || 0, Number(a.bayarBulanIni) || 0, Number(a.sisaTotal) || 0, a.limitAktif ? Number(a.limitEfektif) || 0 : '-', a.status]);
             });
             var ws = XLSX.utils.aoa_to_sheet(d);
             ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 25 }, { wch: 16 }, { wch: 24 }, { wch: 20 }, { wch: 18 }, { wch: 24 }, { wch: 16 }, { wch: 14 }, { wch: 12 }];
@@ -9164,21 +9163,36 @@
                     '<div>' + (res.blokir ? '<span style="color:#e74c3c; font-weight:700;"><i class="bi bi-x-octagon-fill"></i> Blokir Manual</span>' : '<span style="color:#27ae60; font-weight:700;"><i class="bi bi-check-circle-fill"></i> Tidak Diblokir</span>') + '</div>' +
                     '</div></div>';
 
-                var statCards = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px;">' +
+                var mCur = Number(res.bulanBerjalan) || 1;
+                var mLalu = mCur - 1; if (mLalu < 1) mLalu = 12;
+                var mSebelum = mCur - 2; if (mSebelum < 1) mSebelum += 12;
+                var lblBlnIni = namaBulan[mCur] || mCur;
+                var lblBlnLalu = namaBulan[mLalu] || mLalu;
+                var lblBlnSebelum = namaBulan[mSebelum] || mSebelum;
+
+                var statCards = '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;">' +
                     '<div style="background:#eaf8ff; border:1px solid #bee3f8; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#2b6cb0; text-transform:uppercase;">Sisa Tagihan Bulan Lalu</div>' +
-                    '<div style="font-size:17px; font-weight:900; color:#2c5282; margin-top:4px;">' + rp(res.sisaBulanLalu) + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Dibawa ke bulan berjalan = pengurang limit</div></div>' +
-                    '<div style="background:#fff5f5; border:1px solid #fed7d7; border-radius:12px; padding:12px;">' +
-                    '<div style="font-size:10px; font-weight:700; color:#9b2c2c; text-transform:uppercase;">Limit Efektif Sekarang</div>' +
-                    '<div style="font-size:17px; font-weight:900; color:' + (res.limitEfektifNow <= 0 ? '#e53e3e' : '#276749') + '; margin-top:4px;">' + (res.limitAktif ? rp(res.limitEfektifNow) : 'Limit Nonaktif') + '</div>' +
-                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + (res.limitAktif && res.limitEfektifNow <= 0 ? 'Transaksi kredit DIBLOKIR' : 'Transaksi kredit dapat berjalan') + '</div></div>' +
+                    '<div style="font-size:10px; font-weight:700; color:#2b6cb0; text-transform:uppercase;">Sisa Belum Terbayar (' + lblBlnSebelum + ')</div>' +
+                    '<div style="font-size:16px; font-weight:900; color:#2c5282; margin-top:4px;">' + rp(res.sisaBelumTerbayar) + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Satu-satunya pengurang limit bulan berjalan</div></div>' +
+                    '<div style="background:#fffaf0; border:1px solid #feebc8; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#975a16; text-transform:uppercase;">Tagihan Bulan Lalu (' + lblBlnLalu + ')</div>' +
+                    '<div style="font-size:16px; font-weight:900; color:#744210; margin-top:4px;">' + rp(res.tagihanBulanLalu) + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Tidak mengurangi limit bulan berjalan</div></div>' +
+                    '<div style="background:#ebf8ff; border:1px solid #bae6fd; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#0369a1; text-transform:uppercase;">Tagihan Bulan Ini (' + lblBlnIni + ')</div>' +
+                    '<div style="font-size:16px; font-weight:900; color:#0c4a6e; margin-top:4px;">' + rp(res.tagihanBulanIni) + '</div></div>' +
                     '<div style="background:#f0fff4; border:1px solid #c6f6d5; border-radius:12px; padding:12px;">' +
                     '<div style="font-size:10px; font-weight:700; color:#276749; text-transform:uppercase;">Limit Global</div>' +
-                    '<div style="font-size:17px; font-weight:900; color:#22543d; margin-top:4px;">' + (res.limitAktif ? rp(res.limitGlobal) : 'Nonaktif') + '</div></div>' +
+                    '<div style="font-size:16px; font-weight:900; color:#22543d; margin-top:4px;">' + (res.limitAktif ? rp(res.limitGlobal) : 'Nonaktif') + '</div></div>' +
+                    '<div style="background:#fff5f5; border:1px solid #fed7d7; border-radius:12px; padding:12px;">' +
+                    '<div style="font-size:10px; font-weight:700; color:#9b2c2c; text-transform:uppercase;">Limit Efektif Bulan Ini</div>' +
+                    '<div style="font-size:16px; font-weight:900; color:' + (res.limitEfektifNow <= 0 ? '#e53e3e' : '#276749') + '; margin-top:4px;">' + (res.limitAktif ? rp(res.limitEfektifNow) : 'Limit Nonaktif') + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">' + (res.limitAktif && res.limitEfektifNow <= 0 ? 'Transaksi kredit DIBLOKIR' : 'Transaksi kredit dapat berjalan') + '</div></div>' +
                     '<div style="background:#ccfbf1; border:1px solid #99f6e4; border-radius:12px; padding:12px;">' +
                     '<div style="font-size:10px; font-weight:700; color:#115e59; text-transform:uppercase;">Sisa Tagihan Total</div>' +
-                    '<div style="font-size:17px; font-weight:900; color:#134e4a; margin-top:4px;">' + rp(res.sisaTotal) + '</div></div>' +
+                    '<div style="font-size:16px; font-weight:900; color:#134e4a; margin-top:4px;">' + rp(res.sisaTotal) + '</div>' +
+                    '<div style="font-size:9px; color:#718096; margin-top:2px;">Saldo sisa seluruh bulan (akumulasi)</div>' +
                     '</div>';
 
                 var rowsHtml = '';
@@ -9205,9 +9219,10 @@
                 }
 
                 var keterangan = '<div style="background:#fffbe6; border:1px solid #fef3c7; border-radius:10px; padding:10px 12px; font-size:11px; color:#92400e; margin-top:12px; line-height:1.6;">' +
-                    '<b>Cara membaca:</b> Limit Efektif Bulan Ini = Limit Global − Sisa Tagihan Bulan Lalu.<br>' +
-                    'Sisa tagihan bulan lalu yang belum lunas terakumulasi dan mengurangi limit sampai Rp 0 (kredit diblokir). ' +
-                    'Contoh: sisa akhir Juli dibawa ke Agustus; sisa akhir Agustus (termasuk tagihan Juli yang belum dibayar) mengurangi limit September.</div>';
+                    '<b>Cara membaca:</b> Limit Efektif Bulan Ini = Limit Global − Sisa Belum Terbayar (' + lblBlnSebelum + ').<br>' +
+                    'Yang MENGURANGI limit bulan berjalan HANYA <b>sisa belum terbayar</b> (utang sebelum bulan lalu). ' +
+                    'Tagihan bulan lalu (' + lblBlnLalu + ') TIDAK mengurangi limit bulan berjalan. ' +
+                    'Pembayaran diprioritaskan melunasi <b>sisa belum terbayar</b> terlebih dahulu, baru <b>tagihan bulan lalu</b>.</div>';
 
                 Swal.fire({
                     title: '<span style="font-size:18px; font-weight:800; color:#2d3748;">Detail Limit &amp; Tagihan</span>',
